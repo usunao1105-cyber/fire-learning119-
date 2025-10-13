@@ -80,31 +80,31 @@
   <main>
     <!-- 教材1 -->
     <div class="lesson-card">
-      <div class="lesson-title">原子力災害をテストする</div>
+      <div class="lesson-title">オウキスライドショー</div>
       <a href="lesson1/index.html" target="_blank">学習する</a>
     </div>
 
     <!-- 教材2 -->
     <div class="lesson-card">
-      <div class="lesson-title">原子力座学</div>
+      <div class="lesson-title">座学</div>
       <a href="lesson2/index.html" target="_blank">学習する</a>
     </div>
 
     <!-- 教材3 -->
     <div class="lesson-card">
-      <div class="lesson-title">振動工具 基礎講座</div>
+      <div class="lesson-title">基礎講座</div>
       <a href="lesson3/index.html" target="_blank">学習する</a>
     </div>
 
     <!-- 教材4 -->
     <div class="lesson-card">
-      <div class="lesson-title">振動工具 資料編</div>
+      <div class="lesson-title">資料編</div>
       <a href="lesson4/index.html" target="_blank">学習する</a>
     </div>
 
     <!-- 教材5 -->
     <div class="lesson-card">
-      <div class="lesson-title">振動工具 小テスト</div>
+      <div class="lesson-title">小テスト</div>
       <a href="lesson5/index.html" target="_blank">学習する</a>
     </div>
 
