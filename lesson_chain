@@ -1,1 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新伐木作業（チェーンソー）特別教育</title>
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    header {
+      background-color: #b91c1c;
+      color: white;
+      text-align: center;
+      padding: 1.2rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      color: #ffeaea;
+    }
+    .container {
+      max-width: 900px;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+    }
+    .slide-frame {
+      position: relative;
+      width: 100%;
+      height: 0;
+      padding-bottom: 56.25%; /* 16:9比率 */
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .slide-frame iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .notes {
+      background-color: #fff;
+      border-left: 5px solid #b91c1c;
+      padding: 1.2rem;
+      line-height: 1.7;
+      border-radius: 6px;
+    }
+    .notes h3 {
+      margin-top: 0;
+      color: #b91c1c;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #777;
+      margin: 2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>新伐木作業（チェーンソー）特別教育</h1>
+    <p>消防職員向け eラーニング教材</p>
+  </header>
+
+  <div class="container">
+    <!-- スライドの埋め込み -->
+    <div class="slide-frame">
+      <iframe src="https://docs.google.com/presentation/d/1KulWe3jCWjfH0sjd0gv5c-4FiHl--nu4H_MWieZjsHg/embed?start=false&loop=false"
+              allowfullscreen></iframe>
+    </div>
+
+    <!-- ノート（読み原稿） -->
+    <div class="notes">
+      <h3>講師ノート（読み原稿）</h3>
+      <p>今回は「新伐木作業（チェーンソー）の業務に係る特別教育」を行います。</p>
+      <p>岡崎市は森林を市域の約60パーセントが占めており、風水害等によりチェーンソーを使用する機会もあると思います。</p>
+      <p>さらに、大船渡市の林野火災は皆さんの記憶にも新しいと思いますが、緊急消防援助隊で出動した他県の消防隊員が転倒木の伐木や立木の伐倒を行っている映像がSNSに流れていました。</p>
+      <p>チェーンソーを使用した木の伐木・伐倒の機会は少ないですが、消防職員として必須の教育になります。今回の特別教育を通じて、安全・確実・迅速な活動につなげていただければと思います。</p>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 消防eラーニングサポート / 作成：Naoki
+  </footer>
+</body>
+</html>
 
