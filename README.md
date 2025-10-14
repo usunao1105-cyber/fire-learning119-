@@ -1,49 +1,109 @@
-# 🔥 消防 eラーニングポータル
+<div align="center" style="background-color:#000; color:#d4af37; font-family:'Hiragino Sans','Yu Gothic',sans-serif; padding:40px 20px; border-radius:12px;">
 
-消防職員のための実践型オンライン教材です。  
-現場活動の安全・確実・迅速を支える知識を、いつでもどこでも学べます。  
+  <h1 style="color:#ff2e2e; letter-spacing:0.05em; margin-bottom:0.3em;">
+    🚒 消防 eラーニングポータル
+  </h1>
+  <p style="font-size:1.1em; color:#d4af37; margin-bottom:1em;">
+    安全・確実・迅速な現場活動を支える、実践型オンライン教材。
+  </p>
+  <hr style="border: 0; height: 1px; background: linear-gradient(to right, #ff2e2e, #d4af37, #ff2e2e); width:80%; margin: 30px auto;">
 
----
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px; max-width:900px; margin:auto;">
 
-## 📘 講座一覧
+    <!-- Lesson 1〜15 -->
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 1</h3>
+      <p>火災現場の安全管理</p>
+      <a href="lesson1/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
 
-| Lesson | 内容 | リンク |
-|:--:|:--|:--:|
-| 1 | 【火災現場の安全管理】出動前確認と初動行動 | [▶ 開く](./lesson1/index.html) |
-| 2 | 【救助活動の基本】現場状況の把握と安全確保 | [▶ 開く](./lesson2/index.html) |
-| 3 | 【災害時の通信管理】無線運用と連携体制 | [▶ 開く](./lesson3/index.html) |
-| 4 | 【車両運用】運転・車両点検・緊急走行時の注意 | [▶ 開く](./lesson4/index.html) |
-| 5 | 【機械器具の取扱い】整備・点検・保守管理 | [▶ 開く](./lesson5/index.html) |
-| 6 | 【火災調査】原因判定と関係法令の基礎 | [▶ 開く](./lesson6/index.html) |
-| 7 | 【新伐木作業（チェーンソー）特別教育】 | [▶ 開く](./lesson7/index.html) |
-| 8 | 【感染防止対策】出動時の個人防護具・処理方法 | [▶ 開く](./lesson8/index.html) |
-| 9 | 【危険物火災】化学的特性と対応要領 | [▶ 開く](./lesson9/index.html) |
-| 10 | 【水難救助】水流・装備・安全確保のポイント | [▶ 開く](./lesson10/index.html) |
-| 11 | 【災害現場での心理対応】住民対応とメンタルケア | [▶ 開く](./lesson11/index.html) |
-| 12 | 【無線通信障害対応】バックアップ手段と運用 | [▶ 開く](./lesson12/index.html) |
-| 13 | 【訓練指導法】教育計画と安全配慮事項 | [▶ 開く](./lesson13/index.html) |
-| 14 | 【機関員教育】車両特性と運転操作の留意点 | [▶ 開く](./lesson14/index.html) |
-| 15 | 【リーダーシップ】隊の統率と判断力強化 | [▶ 開く](./lesson15/index.html) |
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 2</h3>
+      <p>救助活動の基本</p>
+      <a href="lesson2/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
 
----
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 3</h3>
+      <p>通信管理・無線運用</p>
+      <a href="lesson3/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
 
-## 🧭 利用方法
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 4</h3>
+      <p>車両運用と安全走行</p>
+      <a href="lesson4/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
 
-1. 各講座名の「▶ 開く」をクリックして閲覧します。  
-2. 各Lessonページ内ではスライド形式・動画・補足ノートが統合されています。  
-3. 教材はスマートフォン・タブレットでも自動最適化されます。
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 5</h3>
+      <p>機械器具の取扱い</p>
+      <a href="lesson5/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
 
----
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 6</h3>
+      <p>火災調査と関係法令</p>
+      <a href="lesson6/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
 
-## 🧩 制作・管理
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 7</h3>
+      <p>伐木作業（チェーンソー）特別教育</p>
+      <a href="lesson7/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
 
-- **作成責任者**：直樹  
-- **対象**：消防職員・救助隊員・機関員・新任職員  
-- **目的**：安全・確実・迅速な現場活動の実践力向上  
-- **配信形態**：GitHub Pages によるeラーニング教材公開  
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 8</h3>
+      <p>感染防止対策</p>
+      <a href="lesson8/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
 
----
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 9</h3>
+      <p>危険物火災対応</p>
+      <a href="lesson9/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
 
-> 💡 推奨環境：Google Chrome / Safari 最新版  
-> 🔒 個人情報を扱うログインページは今後別途実装予定  
-> 📅 最終更新日：2025年10月
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 10</h3>
+      <p>水難救助</p>
+      <a href="lesson10/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
+
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 11</h3>
+      <p>心理対応・住民支援</p>
+      <a href="lesson11/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
+
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 12</h3>
+      <p>無線通信障害対応</p>
+      <a href="lesson12/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
+
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 13</h3>
+      <p>訓練指導法</p>
+      <a href="lesson13/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
+
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 14</h3>
+      <p>機関員教育</p>
+      <a href="lesson14/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
+
+    <div style="background-color:#111; border:1px solid #d4af37; border-radius:10px; padding:20px;">
+      <h3 style="color:#ff2e2e;">Lesson 15</h3>
+      <p>リーダーシップ</p>
+      <a href="lesson15/index.html" style="color:#000; background-color:#d4af37; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold;">▶ 学習する</a>
+    </div>
+
+  </div>
+
+  <hr style="border:0; height:1px; background:linear-gradient(to right, #d4af37, #ff2e2e, #d4af37); width:70%; margin:40px auto;">
+  <p style="font-size:0.9em; color:#888;">© 2025 消防eラーニングサポート / 作成：Naoki</p>
+
+</div>
