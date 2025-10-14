@@ -1,117 +1,49 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>消防職員 eラーニングポータル</title>
-  <style>
-    body {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      background-color: #f5f7fa;
-      margin: 0;
-      padding: 0;
-      color: #333;
-    }
-    header {
-      background-color: #b91c1c;
-      color: white;
-      text-align: center;
-      padding: 1rem 0.5rem;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 1.3rem;
-      letter-spacing: 0.05em;
-    }
-    header p {
-      margin: 0.2rem 0 0;
-      font-size: 0.9rem;
-      color: #ffe4e4;
-    }
-    main {
-      max-width: 600px;
-      margin: 1.5rem auto;
-      padding: 0 1rem;
-    }
-    .lesson-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      margin-bottom: 1rem;
-      padding: 1rem;
-      text-align: center;
-      transition: transform 0.15s ease;
-    }
-    .lesson-card:hover {
-      transform: scale(1.02);
-    }
-    .lesson-title {
-      font-size: 1.2rem;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-      color: #b91c1c;
-    }
-    a {
-      display: inline-block;
-      text-decoration: none;
-      background-color: #dc2626;
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      transition: background-color 0.2s ease;
-    }
-    a:hover {
-      background-color: #991b1b;
-    }
-    footer {
-      text-align: center;
-      font-size: 0.8rem;
-      color: #777;
-      margin: 2rem 0;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>消防職員 eラーニング ポータル</h1>
-    <p>安全管理・救助活動・感染防止などを学ぶ教材一覧</p>
-  </header>
+# 🔥 消防 eラーニングポータル
 
-  <main>
-    <!-- 教材1 -->
-    <div class="lesson-card">
-      <div class="lesson-title">オウキスライドショー</div>
-      <a href="lesson1/index.html" target="_blank">学習する</a>
-    </div>
+消防職員のための実践型オンライン教材です。  
+現場活動の安全・確実・迅速を支える知識を、いつでもどこでも学べます。  
 
-    <!-- 教材2 -->
-    <div class="lesson-card">
-      <div class="lesson-title">座学</div>
-      <a href="lesson2/index.html" target="_blank">学習する</a>
-    </div>
+---
 
-    <!-- 教材3 -->
-    <div class="lesson-card">
-      <div class="lesson-title">基礎講座</div>
-      <a href="lesson3/index.html" target="_blank">学習する</a>
-    </div>
+## 📘 講座一覧
 
-    <!-- 教材4 -->
-    <div class="lesson-card">
-      <div class="lesson-title">資料編</div>
-      <a href="lesson4/index.html" target="_blank">学習する</a>
-    </div>
+| Lesson | 内容 | リンク |
+|:--:|:--|:--:|
+| 1 | 【火災現場の安全管理】出動前確認と初動行動 | [▶ 開く](./lesson1/index.html) |
+| 2 | 【救助活動の基本】現場状況の把握と安全確保 | [▶ 開く](./lesson2/index.html) |
+| 3 | 【災害時の通信管理】無線運用と連携体制 | [▶ 開く](./lesson3/index.html) |
+| 4 | 【車両運用】運転・車両点検・緊急走行時の注意 | [▶ 開く](./lesson4/index.html) |
+| 5 | 【機械器具の取扱い】整備・点検・保守管理 | [▶ 開く](./lesson5/index.html) |
+| 6 | 【火災調査】原因判定と関係法令の基礎 | [▶ 開く](./lesson6/index.html) |
+| 7 | 【新伐木作業（チェーンソー）特別教育】 | [▶ 開く](./lesson7/index.html) |
+| 8 | 【感染防止対策】出動時の個人防護具・処理方法 | [▶ 開く](./lesson8/index.html) |
+| 9 | 【危険物火災】化学的特性と対応要領 | [▶ 開く](./lesson9/index.html) |
+| 10 | 【水難救助】水流・装備・安全確保のポイント | [▶ 開く](./lesson10/index.html) |
+| 11 | 【災害現場での心理対応】住民対応とメンタルケア | [▶ 開く](./lesson11/index.html) |
+| 12 | 【無線通信障害対応】バックアップ手段と運用 | [▶ 開く](./lesson12/index.html) |
+| 13 | 【訓練指導法】教育計画と安全配慮事項 | [▶ 開く](./lesson13/index.html) |
+| 14 | 【機関員教育】車両特性と運転操作の留意点 | [▶ 開く](./lesson14/index.html) |
+| 15 | 【リーダーシップ】隊の統率と判断力強化 | [▶ 開く](./lesson15/index.html) |
 
-    <!-- 教材5 -->
-    <div class="lesson-card">
-      <div class="lesson-title">小テスト</div>
-      <a href="lesson5/index.html" target="_blank">学習する</a>
-    </div>
+---
 
-  </main>
+## 🧭 利用方法
 
-  <footer>
-    © 2025 消防eラーニングサポート / 作成：Naoki
-  </footer>
-</body>
-</html>
+1. 各講座名の「▶ 開く」をクリックして閲覧します。  
+2. 各Lessonページ内ではスライド形式・動画・補足ノートが統合されています。  
+3. 教材はスマートフォン・タブレットでも自動最適化されます。
+
+---
+
+## 🧩 制作・管理
+
+- **作成責任者**：直樹  
+- **対象**：消防職員・救助隊員・機関員・新任職員  
+- **目的**：安全・確実・迅速な現場活動の実践力向上  
+- **配信形態**：GitHub Pages によるeラーニング教材公開  
+
+---
+
+> 💡 推奨環境：Google Chrome / Safari 最新版  
+> 🔒 個人情報を扱うログインページは今後別途実装予定  
+> 📅 最終更新日：2025年10月
