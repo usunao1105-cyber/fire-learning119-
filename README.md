@@ -90,7 +90,7 @@
     <!-- 各Lesson -->
     <div class="card">
       <div class="lesson-title">Lesson 1</div>
-      <div class="lesson-desc">火災現場の安全管理</div>
+      <div class="lesson-desc">NBC等活動支援MEMO</div>
       <a href="lesson1/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
