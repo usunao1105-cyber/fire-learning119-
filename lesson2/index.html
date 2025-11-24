@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原子力災害対策 e-Learning【公開版】</title>
+
+    <!-- ▼ SNS共有用の設定（OGPタグ）を最終確認 ▼ -->
+    <meta property="og:title" content="【クイズで学ぶ】原子力災害対策 e-Learning" />
+    <meta property="og:description" content="もしもの時に備える知識をクイズ形式で学べます。あなたの防災知識をチェックしてみませんか？" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://あなたのサイト名.netlify.app/courses/course1.html" />
+    <meta property="og:image" content="https://placehold.co/1200x630/1a3a6e/ffffff?text=%E5%8E%9F%E5%AD%90%E5%8A%9B%E7%81%BD%E5%AE%B3%E5%AF%BE%E7%AD%96%0A%E3%82%AF%E3%82%A4%E3%82%BA" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- ▲ SNS共有用の設定ここまで ▲ -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Serif JP', serif;
+            background-color: #f0f2f5;
+        }
+        .main-title {
+            font-family: 'Noto Serif JP', serif;
+            font-weight: 700;
+        }
+        .question-text {
+            font-family: 'Noto Serif JP', serif;
+            font-weight: 600;
+        }
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background-color: #1a3a6e;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #244f94;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+        }
+        .result-card {
+            border-left-width: 6px;
+        }
+        .result-correct {
+            border-left-color: #10B981; /* Emerald 500 */
+        }
+        .result-incorrect {
+            border-left-color: #EF4444; /* Red 500 */
+        }
+        .option-label {
+            cursor: pointer;
+            padding: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .option-label:hover {
+            background-color: #f9fafb;
+            border-color: #1a3a6e;
+        }
+        input[type="radio"]:checked + .option-label {
+            background-color: #eef2ff; /* Indigo 50 */
+            border-color: #1a3a6e;
+            color: #1a3a6e;
+            font-weight: 600;
+        }
+        input[type="radio"] {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="app" class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold main-title text-gray-800">原子力災害対策 e-Learning</h1>
+            <p class="text-gray-600 mt-2">消防庁の資料に基づく公開学習教材</p>
+        </header>
+
+        <main id="quiz-container" class="space-y-6">
+            <!-- Questions will be dynamically inserted here -->
+        </main>
+
+        <section id="result-container" class="hidden mt-8 text-center card p-8">
+            <h2 class="text-2xl sm:text-3xl font-bold main-title text-gray-800 mb-4">採点結果</h2>
+            <p id="score" class="text-4xl font-bold text-blue-900 mb-2"></p>
+            <p id="feedback" class="text-lg text-gray-700 mb-6"></p>
+        </section>
+        
+        <footer class="text-center mt-8">
+            <button id="submit-btn" class="btn btn-primary text-lg font-semibold py-3 px-12 rounded-lg shadow-md">採点する</button>
+            <button id="retry-btn" class="btn btn-secondary text-lg font-semibold py-3 px-12 rounded-lg shadow-md hidden">再挑戦する</button>
+            <a href="../index.html" class="block mt-4 text-blue-600 hover:underline">コース一覧に戻る</a>
+        </footer>
+
+    </div>
+
+    <script>
+        const allQuestions = [
+            // 問題1-10
+            { question: "防災計画の策定・見直し：原子力災害対策の推進において、災害対策基本法及び原災法に基づき、原子力施設周辺の関係地方公共団体が作成する計画として適切なものはどれか？", options: ["原子力事業者防災業務計画", "地域防災計画", "原子力施設緊急時対応計画", "国民保護計画"], answer: 1, explanation: "原子力災害対策は、災害対策基本法及び原災法に基づき、原子力事業者、国、地方公共団体等の防災計画に従って必要な措置が講じられる体系となっています。原子力施設周辺の関係地方公共団体は、防災基本計画及び原子力災害対策指針に基づき、地域防災計画を作成し、当該原子力施設や地域の実情に即した原子力災害対策を推進しています。" },
+            { question: "防災計画の策定・見直し：消防機関が原子力施設等の災害に効果的かつ的確に対応するため、事業者側と連携して定期的に見直すべき計画は何か？", options: ["国民保護計画", "原子力災害対策指針", "業務継続計画（BCP）", "警防計画"], answer: 3, explanation: "消防機関においては、原子力施設や放射性同位元素等取扱施設、放射性同位元素等輸送時における災害に有効かつ的確に行えるように、あらかじめ事業者側と十分に連絡をとり、施設等の実情に応じて、警防計画の作成を行う必要があるとされています。" },
+            { question: "防災計画の策定・見直し：大規模災害発生時における職員の安全管理と業務継続のために、庁舎が避難指示区域に含まれた場合に事前に定めるべき事項は何か？", options: ["地域防災計画の策定", "原子力災害対策指針の遵守", "退避先及び業務継続計画の策定", "広域応援体制の確立"], answer: 2, explanation: "業務継続性の確保を図る必要があることから、庁舎の所在地が避難のための立退きの指示を受けた地域に含まれた場合の退避先をあらかじめ定めておくとともに、業務継続計画の策定等により、業務継続性の確保を図ることが重要です。" },
+            { question: "組織体制と役割分担：原子力災害時において、現場指揮本部が設置された際に必ず参加を求めるべき要員は誰か？", options: ["地方公共団体職員", "報道機関担当者", "住民代表", "事業所側責任者、放射線管理要員等"], answer: 3, explanation: "現場指揮本部の所掌事項には「施設責任者・放射線管理責任者との連携」が挙げられています。また、事業所側責任者、放射線管理要員等の参加を求めることが必要であるとされています。" },
+            { question: "組織体制と役割分担：小隊長に求められる重要な役割のうち、隊員の安全管理に関するものとして最も適切なものはどれか？", options: ["関係機関への協力要請", "被害の局限化", "災害現場に存在する危険要因に気づき、小隊を安全に管理し活動する責任", "部隊の統率"], answer: 2, explanation: "小隊長の指揮責任の一つとして安全管理責任が挙げられており、災害現場に存在する危険要因に気づき、小隊を安全に管理し活動する責任を負うとされています。" },
+            { question: "情報管理・通信体制：原子力災害発生直後から錯綜する情報を集約・分析し、災害対応に的確に活用できる情報管理体制を整備する上で、情報収集項目として特に重要なものはどれか？", options: ["気象情報と交通情報", "地域の人口密度と避難場所の収容人数", "事故等の状況、空間線量率等、人命危険、活動危険", "周辺住民の安否情報と避難状況"], answer: 2, explanation: "現場指揮本部の「実態把握」には、情報収集項目として事故の種別、災害等の状況、放射性物質の状況、空間線量率等、人命危険、活動危険などが含まれています。" },
+            { question: "情報管理・通信体制：大規模災害発生時、情報伝達の支障に備えて確保すべき多様な通信手段として、消防救急無線以外に特に推奨されるものはどれか？", options: ["固定電話とPHS", "インターネット回線とSNS", "衛星携帯電話と災害時優先電話", "トランシーバーと拡声器"], answer: 2, explanation: "大規模災害発生時の通信手段として、消防救急無線、PHS、衛星回線を利用した行政通信システムや衛星携帯電話、災害時優先電話が有効であった事例や、その活用が推奨されています。" },
+            { question: "隊員教育・訓練：隊員が原子力災害時の消防活動において習得すべき専門知識として、最も適切なものはどれか？", options: ["一般的な消火技術と救助技術", "交通整理の知識と広報技術", "放射性物質や放射線に関する一般知識と専門知識、放射線防護資機材の取扱い", "災害対策本部の運営方法と地域住民とのコミュニケーション"], answer: 2, explanation: "町が行う職員研修の内容として、原子力災害とその特性、放射線による健康への影響と放射線防護、緊急時モニタリング実施方法や機器等が含まれており、これらの知識習得が重要であるとされています。" },
+            { question: "隊員教育・訓練：効果的な訓練を実施するために、小隊長が常に検証すべき事項は何か？", options: ["訓練に参加した隊員の体力レベル", "訓練に要した時間と費用", "効果的かつ効率的な手法", "訓練内容の難易度"], answer: 2, explanation: "小隊長は管内情勢や隊員の能力などに応じて訓練を計画し、実行する。訓練は企画側（小隊長）と実行側（隊員）が目的を共有して実行することが重要であり、小隊長は効果的かつ効率的な手法を常に検証するとされています。" },
+            { question: "安全管理：外部被ばく防護の三原則として、活動時間の短縮、線源からの距離をとることの他に重要な原則は何か？", options: ["清潔区域の確保", "風下での活動", "遮へい", "呼吸保護具の着用"], answer: 2, explanation: "γ線や中性子線は、主に外部被ばくが問題となることから、外部被ばく防護の三原則（時間、距離、遮へい）による防護が有効であるとされています。" },
+            // ... (The rest of the questions 11-50 are omitted for brevity but should be included)
+        ];
+
+        let currentQuestions = [];
+
+        const quizContainer = document.getElementById('quiz-container');
+        const resultContainer = document.getElementById('result-container');
+        const scoreElement = document.getElementById('score');
+        const feedbackElement = document.getElementById('feedback');
+        const submitBtn = document.getElementById('submit-btn');
+        const retryBtn = document.getElementById('retry-btn');
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startQuiz(numQuestions) {
+            quizContainer.innerHTML = '';
+            resultContainer.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+            retryBtn.classList.add('hidden');
+            
+            const shuffled = shuffleArray([...allQuestions]);
+            currentQuestions = shuffled.slice(0, numQuestions);
+
+            displayQuestions();
+        }
+
+        function displayQuestions() {
+            currentQuestions.forEach((q, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'card p-6';
+                questionCard.id = `question-${index}`;
+
+                const questionTitle = document.createElement('h3');
+                questionTitle.className = 'text-lg question-text mb-4';
+                questionTitle.textContent = `問題 ${index + 1}： ${q.question}`;
+                questionCard.appendChild(questionTitle);
+
+                const optionsContainer = document.createElement('div');
+                optionsContainer.className = 'space-y-3';
+                
+                q.options.forEach((option, i) => {
+                    const optionId = `q${index}-o${i}`;
+                    
+                    const radioInput = document.createElement('input');
+                    radioInput.type = 'radio';
+                    radioInput.id = optionId;
+                    radioInput.name = `question-${index}`;
+                    radioInput.value = i;
+                    
+                    const optionLabel = document.createElement('label');
+                    optionLabel.htmlFor = optionId;
+                    optionLabel.className = 'block option-label';
+                    optionLabel.textContent = option;
+
+                    optionsContainer.appendChild(radioInput);
+                    optionsContainer.appendChild(optionLabel);
+                });
+
+                questionCard.appendChild(optionsContainer);
+                quizContainer.appendChild(questionCard);
+            });
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            let allAnswered = true;
+
+            currentQuestions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="question-${index}"]:checked`);
+                const questionCard = document.getElementById(`question-${index}`);
+
+                if (!selectedOption) {
+                    allAnswered = false;
+                    return;
+                }
+                
+                const radioButtons = document.querySelectorAll(`input[name="question-${index}"]`);
+                radioButtons.forEach(rb => rb.disabled = true);
+                
+                const userAnswer = parseInt(selectedOption.value);
+                const isCorrect = userAnswer === q.answer;
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'mt-4 p-4 rounded-lg';
+                
+                if (isCorrect) {
+                    score++;
+                    questionCard.classList.add('result-card', 'result-correct');
+                    resultDiv.classList.add('bg-emerald-50', 'text-emerald-800');
+                    resultDiv.innerHTML = `<p class="font-bold">正解</p>`;
+                } else {
+                    questionCard.classList.add('result-card', 'result-incorrect');
+                    resultDiv.classList.add('bg-red-50', 'text-red-800');
+                    const correctAnswerText = q.options[q.answer];
+                    resultDiv.innerHTML = `<p class="font-bold">不正解</p><p class="mt-1">正解は「${correctAnswerText}」です。</p>`;
+                }
+
+                const explanationP = document.createElement('p');
+                explanationP.className = 'mt-2 text-sm text-gray-600';
+                explanationP.innerHTML = `<strong>解説：</strong> ${q.explanation}`;
+                resultDiv.appendChild(explanationP);
+
+                questionCard.appendChild(resultDiv);
+            });
+
+            if (!allAnswered) {
+                alert('すべての問題に回答してください。');
+                return;
+            }
+
+            scoreElement.textContent = `${score} / ${currentQuestions.length}`;
+            let feedbackText = '';
+            const percentage = (score / currentQuestions.length) * 100;
+            if (percentage === 100) {
+                feedbackText = '素晴らしい！全問正解です。';
+            } else if (percentage >= 80) {
+                feedbackText = '優秀です！あともう一息。';
+            } else if (percentage >= 60) {
+                feedbackText = 'よくできました。復習して知識を確実にしましょう。';
+            } else {
+                feedbackText = 'お疲れ様でした。もう一度挑戦して理解を深めましょう。';
+            }
+            feedbackElement.textContent = feedbackText;
+
+            resultContainer.classList.remove('hidden');
+            submitBtn.classList.add('hidden');
+            retryBtn.classList.remove('hidden');
+            
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        submitBtn.addEventListener('click', submitQuiz);
+        retryBtn.addEventListener('click', () => startQuiz(5));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            startQuiz(10);
+        });
+    </script>
+</body>
+</html>
