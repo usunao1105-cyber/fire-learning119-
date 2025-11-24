@@ -1,91 +1,866 @@
-lesson1/index.html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lesson 1: 原子力災害をテストする</title>
-  <style>
-    body {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      background-color: #f0f4f8;
-      margin: 0;
-      padding: 2rem;
-      color: #333;
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background-color: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    h1 {
-      color: #1a3a6e;
-      border-bottom: 2px solid #2563eb;
-      padding-bottom: 0.5rem;
-    }
-    .slide-embed {
-      position: relative;
-      padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-      height: 0;
-      overflow: hidden;
-      margin-bottom: 2rem;
-      border: 1px solid #ddd;
-    }
-    .slide-embed iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-    .speaker-notes {
-      background-color: #f8f9fa;
-      border-left: 5px solid #2563eb;
-      padding: 1rem;
-      font-size: 1.1em;
-      line-height: 1.6;
-    }
-    .back-link {
-      display: inline-block;
-      margin-top: 2rem;
-      text-decoration: none;
-      background-color: #1a3a6e;
-      color: white;
-      padding: 0.6rem 1.2rem;
-      border-radius: 8px;
-      transition: background-color 0.2s ease;
-    }
-    .back-link:hover {
-      background-color: #1d4ed8;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NBC災害 活動ワークシート</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Babel (JSX変換用) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* カスタムアニメーション定義 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes bounceShort {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        .animate-scale-in {
+            animation: scaleIn 0.2s ease-out forwards;
+        }
+        .animate-bounce-short {
+            animation: bounceShort 1s infinite;
+        }
+        
+        /* スクロールバーの調整（モバイル向け） */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ccc; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #aaa; 
+        }
+    </style>
 </head>
-<body>
+<body class="bg-gray-100 text-slate-900">
+    <div id="root"></div>
 
-  <div class="container">
-    <h1>Lesson 1: 原子力災害をテストする</h1>
+    <!-- type="text/babel" に data-type="module" を追加し、import文を使えるように変更 -->
+    <script type="text/babel" data-type="module">
+        // ライブラリを esm.sh から直接インポート（依存関係エラーを回避）
+        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+        import { 
+            Clock, FileText, Save, ChevronDown, ChevronUp, Mic, Eye, 
+            AlertTriangle, Shield, RefreshCw, Copy, Users, Timer, 
+            Activity, CheckCircle, Radio, Send, Edit3, StopCircle, Play 
+        } from 'https://esm.sh/lucide-react@0.263.1';
 
-    <div class="slide-embed">
-      <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTb9kenmwihtLPaG6JXJBKPK-jSQZJU42I8T087-HotYhIFgQR3HNSdUKJHOQo3GueBYVAeSBEaV_Fi/pubembed?start=false&loop=false&delayms=3000" frameborder="0" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
-    </div>
+        // --- アプリケーション本体 ---
 
-    <h2>スピーカーノート</h2>
-    <div class="speaker-notes">
-      <p>
-        【スライド1のノート】<br>
-        このセクションでは、原子力災害の初期対応について学びます...
-      </p>
-      <p>
-        【スライド2のノート】<br>
-        次に、避難誘導の手順についてです...
-      </p>
-      </div>
+        function NBCWorksheetApp() {
+            const [appVersion, setAppVersion] = useState(0);
 
-    <a href="../index.html" class="back-link">ポータルに戻る</a>
-  </div>
+            return (
+                <NBCWorksheetContent 
+                    key={appVersion} 
+                    onReset={() => setAppVersion(v => v + 1)} 
+                />
+            );
+        }
 
+        function NBCWorksheetContent({ onReset }) {
+            const [viewMode, setViewMode] = useState('commander');
+            const [isMissionStarted, setIsMissionStarted] = useState(false);
+            const [missionStartTime, setMissionStartTime] = useState(null);
+            const [elapsedTime, setElapsedTime] = useState('00:00:00');
+            const [currentTime, setCurrentTime] = useState(''); 
+            const [logs, setLogs] = useState([]);
+            
+            const [showLogModal, setShowLogModal] = useState(false);
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+            const textAreaRef = useRef(null);
+
+            // --- 状態のリフトアップ ---
+            const [commanderStates, setCommanderStates] = useState({});
+            const [platoonStates, setPlatoonStates] = useState({});
+            const [platoonChecks, setPlatoonChecks] = useState({});
+
+            const [members, setMembers] = useState([
+                { id: 1, name: "隊員1", role: "待機" },
+                { id: 2, name: "隊員2", role: "待機" },
+                { id: 3, name: "隊員3", role: "待機" },
+                { id: 4, name: "隊員4", role: "待機" },
+                { id: 5, name: "隊員5", role: "待機" },
+            ]);
+
+            // ホットゾーン活動タイマー状態
+            // memberEntryTimes: { id: timestamp (開始時刻) }
+            // memberFinishedTimes: { id: string (活動時間 "15:30" など) }
+            const [memberEntryTimes, setMemberEntryTimes] = useState({});
+            const [memberFinishedTimes, setMemberFinishedTimes] = useState({});
+
+            const [selectedOrder, setSelectedOrder] = useState("");
+            const [isOrderEchoed, setIsOrderEchoed] = useState(false);
+
+            // ---------------------------
+            // 共通機能
+            // ---------------------------
+            useEffect(() => {
+                const updateClock = () => {
+                    const now = new Date();
+                    setCurrentTime(now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+                };
+                updateClock();
+                const clockInterval = setInterval(updateClock, 1000);
+                return () => clearInterval(clockInterval);
+            }, []);
+
+            // 全体経過時間
+            useEffect(() => {
+                let interval;
+                if (isMissionStarted && missionStartTime) {
+                    interval = setInterval(() => {
+                        const now = new Date();
+                        const diff = now - missionStartTime;
+                        const hours = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
+                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+                        const seconds = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+                        setElapsedTime(`${hours}:${minutes}:${seconds}`);
+                    }, 1000);
+                }
+                return () => clearInterval(interval);
+            }, [isMissionStarted, missionStartTime]);
+
+            const addLog = (text, type = 'info') => {
+                const time = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                setLogs(prev => [{ time, text, type }, ...prev]);
+            };
+
+            const startMission = () => {
+                const now = new Date();
+                setMissionStartTime(now);
+                setIsMissionStarted(true);
+                addLog('【活動開始】事案認知・指令受信', 'system');
+            };
+
+            const finishMission = () => {
+                setIsMissionStarted(false);
+                addLog('【活動終了】全隊撤収・記録保存', 'system');
+                setShowLogModal(true);
+            };
+
+            const handleResetClick = () => setShowResetConfirm(true);
+            const executeReset = () => { setShowResetConfirm(false); onReset(); };
+
+            const copyLogs = () => {
+                if (textAreaRef.current) {
+                    textAreaRef.current.select();
+                    try {
+                        document.execCommand('copy');
+                        alert('✅ ログをクリップボードにコピーしました');
+                    } catch (err) {
+                        alert('コピーエラーが発生しました');
+                    }
+                }
+            };
+            const logTextContent = logs.map(l => `[${l.time}] ${l.text}`).join('\n');
+
+            return (
+                <div className="flex flex-col h-screen bg-gray-100 max-w-lg mx-auto shadow-2xl font-sans">
+                    {/* ヘッダー */}
+                    <div className={`flex-none p-3 shadow-md z-20 text-white transition-colors duration-300 ${isMissionStarted ? 'bg-slate-800' : 'bg-gray-700'}`}>
+                        <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center space-x-3 sm:space-x-4">
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Elapsed</span>
+                                    <div className="flex items-center space-x-1">
+                                        <Clock size={16} className={isMissionStarted ? "text-red-400 animate-pulse" : "text-gray-500"} />
+                                        <span className="font-mono text-lg font-bold tracking-wide">{elapsedTime}</span>
+                                    </div>
+                                </div>
+                                <div className="h-8 w-px bg-gray-600"></div>
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Current</span>
+                                    <span className="font-mono text-base font-medium">{currentTime}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex space-x-2">
+                                <button onClick={() => setShowLogModal(true)} className="flex items-center bg-slate-600 hover:bg-slate-500 px-3 py-1.5 rounded text-xs font-bold transition shadow border border-slate-500">
+                                    <FileText size={14} className="mr-1" />
+                                    ログ
+                                </button>
+                                {(missionStartTime || isMissionStarted) && (
+                                    <button onClick={handleResetClick} className="flex items-center bg-red-800 hover:bg-red-700 px-3 py-1.5 rounded text-xs font-bold transition shadow border border-red-700">
+                                        <RefreshCw size={14} className="mr-1" />
+                                        リセット
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="flex space-x-1 mt-2 bg-slate-900/30 p-1 rounded-lg">
+                            <button onClick={() => setViewMode('commander')} className={`flex-1 flex items-center justify-center py-2 rounded-md text-xs sm:text-sm font-bold transition-all ${viewMode === 'commander' ? 'bg-white text-slate-900 shadow-md' : 'text-gray-400 hover:bg-white/10'}`}>
+                                <Shield size={16} className="mr-1.5" />指揮隊用 (戦略)
+                            </button>
+                            <button onClick={() => setViewMode('platoon')} className={`flex-1 flex items-center justify-center py-2 rounded-md text-xs sm:text-sm font-bold transition-all ${viewMode === 'platoon' ? 'bg-yellow-500 text-slate-900 shadow-md' : 'text-gray-400 hover:bg-white/10'}`}>
+                                <Users size={16} className="mr-1.5" />小隊長用 (戦術)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto bg-gray-50">
+                        {!isMissionStarted && !missionStartTime ? (
+                            <div className="flex flex-col items-center justify-center p-8 h-full">
+                                <Shield size={64} className="text-gray-300 mb-6" />
+                                <h2 className="text-xl font-bold text-gray-700 mb-2">NBC災害 活動支援アプリ</h2>
+                                <p className="text-gray-500 text-sm mb-8 text-center leading-relaxed">
+                                    指揮隊による戦略管理と<br/>
+                                    小隊長による安全管理・隊員掌握を<br/>
+                                    一元管理します。
+                                </p>
+                                <button onClick={startMission} className="w-full max-w-xs bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg flex items-center justify-center text-xl animate-bounce-short">
+                                    <AlertTriangle className="mr-2" />活動開始
+                                </button>
+                            </div>
+                        ) : (
+                            viewMode === 'commander' ? (
+                                <CommanderView 
+                                    isMissionStarted={isMissionStarted} 
+                                    addLog={addLog} 
+                                    finishMission={finishMission} 
+                                    itemStates={commanderStates}
+                                    setItemStates={setCommanderStates}
+                                />
+                            ) : (
+                                <PlatoonView 
+                                    isMissionStarted={isMissionStarted} 
+                                    addLog={addLog} 
+                                    finishMission={finishMission}
+                                    itemStates={platoonStates}
+                                    setItemStates={setPlatoonStates}
+                                    platoonChecks={platoonChecks}
+                                    setPlatoonChecks={setPlatoonChecks}
+                                    members={members}
+                                    setMembers={setMembers}
+                                    memberEntryTimes={memberEntryTimes}
+                                    setMemberEntryTimes={setMemberEntryTimes}
+                                    memberFinishedTimes={memberFinishedTimes}
+                                    setMemberFinishedTimes={setMemberFinishedTimes}
+                                    selectedOrder={selectedOrder}
+                                    setSelectedOrder={setSelectedOrder}
+                                    isOrderEchoed={isOrderEchoed}
+                                    setIsOrderEchoed={setIsOrderEchoed}
+                                />
+                            )
+                        )}
+                    </div>
+
+                    {showLogModal && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div className="bg-white w-full max-w-md h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
+                                <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+                                    <h3 className="font-bold text-gray-800 flex items-center"><FileText size={18} className="mr-2 text-blue-600" />活動記録ログ</h3>
+                                    <button onClick={() => setShowLogModal(false)} className="text-gray-400 hover:text-gray-600 font-bold text-xl px-2">×</button>
+                                </div>
+                                <div className="p-3 bg-blue-50 text-xs text-blue-700 border-b border-blue-100">以下のテキストがコピーされます。</div>
+                                <div className="flex-1 p-2 bg-gray-100">
+                                    <textarea ref={textAreaRef} value={logTextContent} readOnly className="w-full h-full p-3 text-sm font-mono border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div className="p-4 border-t bg-white space-y-3">
+                                    <button onClick={copyLogs} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold shadow flex items-center justify-center">
+                                        <Copy size={18} className="mr-2" />クリップボードにコピー
+                                    </button>
+                                    <button onClick={handleResetClick} className="w-full border border-red-300 text-red-600 py-2 rounded-lg font-bold hover:bg-red-50 text-sm flex items-center justify-center">
+                                        <RefreshCw size={16} className="mr-2" />リセットして初期画面へ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showResetConfirm && (
+                        <div className="absolute inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center p-6">
+                            <div className="bg-white w-full max-w-sm rounded-xl shadow-2xl overflow-hidden border-t-4 border-red-600 animate-scale-in">
+                                <div className="p-6 text-center">
+                                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><RefreshCw size={32} className="text-red-600" /></div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">完全リセット</h3>
+                                    <p className="text-gray-600 mb-6 text-sm">記録はすべて消去されます。</p>
+                                    <div className="flex space-x-3">
+                                        <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-3 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg">キャンセル</button>
+                                        <button onClick={executeReset} className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md">実行</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function CommanderView({ isMissionStarted, addLog, finishMission, itemStates, setItemStates }) {
+            const [openSections, setOpenSections] = useState({ 1: true });
+            const toggleSection = (id) => setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
+
+            const handleAction = (phaseId, itemId, label, actionType) => {
+                if (!isMissionStarted) { alert("活動開始してください"); return; }
+                const key = `${phaseId}-${itemId}`;
+                const currentState = itemStates[key] || { instructed: null, confirmed: null };
+                const currentVal = currentState[actionType];
+                const timeString = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                const newVal = currentVal ? null : timeString;
+                
+                setItemStates(prev => ({ ...prev, [key]: { ...currentState, [actionType]: newVal } }));
+                if (newVal) {
+                    addLog(`【指揮】${actionType === 'instructed' ? '指示' : '確認'} ${label}`, actionType);
+                } else {
+                    addLog(`[取消] 指揮項目: ${label}`, 'info');
+                }
+            };
+
+            const sections = [
+                {
+                    id: 1,
+                    title: "出動・車両積載",
+                    color: "border-red-500",
+                    bgColor: "bg-red-50",
+                    items: [
+                        { id: 1, label: "風向き確認・進入ルート選定" },
+                        { id: 2, label: "化学防護服・呼吸器の積載" },
+                        { id: 3, label: "検知器（ガス・放射線）積載" },
+                        { id: 4, label: "除染資機材・中和剤の積載" },
+                    ],
+                    script: "「NBC災害の疑いあり。窓を閉め外気遮断。風上・高所に部署せよ。」"
+                },
+                {
+                    id: 2,
+                    title: "出動途上・車内活動",
+                    color: "border-orange-500",
+                    bgColor: "bg-orange-50",
+                    items: [
+                        { id: 1, label: "風向風速の再確認・修正" },
+                        { id: 2, label: "関係機関（警察等）への要請確認" },
+                        { id: 3, label: "SDS/UN番号の検索準備" },
+                        { id: 4, label: "近隣住民への屋内退避広報依頼" }
+                    ],
+                    script: "「指令、現着まで詳細不明。後続隊は現場直近に入れるな。風上集結場所で待機させよ。」"
+                },
+                {
+                    id: 3,
+                    title: "現着・初期部署",
+                    color: "border-yellow-500",
+                    bgColor: "bg-yellow-50",
+                    items: [
+                        { id: 1, label: "100m以上手前(風上)で停止" },
+                        { id: 2, label: "双眼鏡で要救助者・容器確認" },
+                        { id: 3, label: "関係者・工場の保安担当確保" },
+                        { id: 4, label: "警戒区域(Hot Zone)仮設定・封鎖" }
+                    ],
+                    script: "「全隊、風上〇〇mに部署。警戒区域を設定する。防護措置なき者は立ち入り厳禁。」"
+                },
+                {
+                    id: 4,
+                    title: "活動方針・ゾーニング",
+                    color: "border-blue-500",
+                    bgColor: "bg-blue-50",
+                    items: [
+                        { id: 1, label: "原因物質の特定・性状確認" },
+                        { id: 2, label: "防護レベル決定(不明時はLevel A)" },
+                        { id: 3, label: "各ゾーン(Hot/Warm/Cold)設定" },
+                        { id: 4, label: "乾的除染(脱衣)の準備指示" },
+                        { id: 5, label: "小隊長の隊員管理状況の確認" }
+                    ],
+                    info: "※令和6年改正: 水除染より「脱衣」「拭き取り」を優先"
+                },
+                {
+                    id: 5,
+                    title: "活動終了・撤収",
+                    color: "border-green-500",
+                    bgColor: "bg-green-50",
+                    items: [
+                        { id: 1, label: "活動隊員の除染・スクリーニング" },
+                        { id: 2, label: "使用資機材の回収・パッキング" },
+                        { id: 3, label: "汚染水の流出防止確認" },
+                        { id: 4, label: "隊員の健康状態最終チェック" }
+                    ],
+                    script: "「警察・業者へ引き継ぐ。汚染の可能性あるため規制は継続せよ。」"
+                }
+            ];
+
+            return (
+                <div className="p-2 pb-24 space-y-3">
+                    {sections.map((section) => (
+                        <div key={section.id} className={`bg-white rounded-lg shadow-sm border-l-4 overflow-hidden ${section.color}`}>
+                            <div className={`p-3 flex justify-between items-center cursor-pointer ${section.bgColor}`} onClick={() => toggleSection(section.id)}>
+                                <h3 className="font-bold text-gray-800 flex items-center">
+                                    <span className="w-6 h-6 rounded-full bg-white text-gray-600 border border-gray-300 flex items-center justify-center text-xs mr-2 shadow-sm">{section.id}</span>
+                                    {section.title}
+                                </h3>
+                                {openSections[section.id] ? <ChevronUp size={20} className="text-gray-500" /> : <ChevronDown size={20} className="text-gray-500" />}
+                            </div>
+                            {openSections[section.id] && (
+                                <div className="p-3 border-t border-gray-100">
+                                    <div className="space-y-2">
+                                        <div className="flex text-xs text-gray-400 px-1 mb-1">
+                                            <span className="flex-1">項目</span>
+                                            <span className="w-20 text-center">指示</span>
+                                            <span className="w-20 text-center">確認</span>
+                                        </div>
+                                        {section.items.map((item) => {
+                                            const key = `${section.id}-${item.id}`;
+                                            const state = itemStates[key] || { instructed: null, confirmed: null };
+                                            return (
+                                                <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                                    <div className="flex-1 pr-2 text-sm font-medium text-gray-700">{item.label}</div>
+                                                    <div className="flex space-x-2">
+                                                        <ActionButton label="指示" icon={Mic} state={state.instructed} onClick={() => handleAction(section.id, item.id, item.label, 'instructed')} color="blue" />
+                                                        <ActionButton label="確認" icon={Eye} state={state.confirmed} onClick={() => handleAction(section.id, item.id, item.label, 'confirmed')} color="green" />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    <div className="pt-6 pb-8">
+                        <button onClick={finishMission} className="w-full bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center text-lg hover:bg-slate-700">
+                            <Save className="mr-2" />
+                            活動終了・記録保存
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function PlatoonView(props) {
+            const { 
+                isMissionStarted, addLog, finishMission, itemStates, setItemStates, 
+                platoonChecks, setPlatoonChecks, members, setMembers,
+                memberEntryTimes, setMemberEntryTimes,
+                memberFinishedTimes, setMemberFinishedTimes,
+                selectedOrder, setSelectedOrder, isOrderEchoed, setIsOrderEchoed
+            } = props;
+
+            const [openSections, setOpenSections] = useState({ 1: true }); 
+            const toggleSection = (id) => setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
+
+            // 再描画用のダミー状態（タイマー表示更新用）
+            const [, setTick] = useState(0);
+            useEffect(() => {
+                const timer = setInterval(() => setTick(t => t + 1), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const handleAction = (phaseId, itemId, label, actionType) => {
+                if (!isMissionStarted) { alert("活動開始してください"); return; }
+                const key = `${phaseId}-${itemId}`;
+                const currentState = itemStates[key] || { instructed: null, confirmed: null };
+                const currentVal = currentState[actionType];
+                const timeString = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                const newVal = currentVal ? null : timeString;
+                setItemStates(prev => ({ ...prev, [key]: { ...currentState, [actionType]: newVal } }));
+                if (newVal) {
+                    addLog(`【小隊】${actionType === 'instructed' ? '指示' : '確認'} ${label}`, actionType);
+                } else {
+                    addLog(`[取消] 小隊項目: ${label}`, 'info');
+                }
+            };
+
+            const handleNameChange = (id, newName) => {
+                setMembers(prev => prev.map(m => m.id === id ? { ...m, name: newName } : m));
+            };
+
+            const toggleRole = (id) => {
+                setMembers(prev => prev.map(m => {
+                    if (m.id !== id) return m;
+                    const roles = ["待機", "進入", "除染", "支援"];
+                    const currentIndex = roles.indexOf(m.role);
+                    const nextRole = roles[(currentIndex + 1) % roles.length];
+                    addLog(`【隊員】${m.name}: ${m.role} -> ${nextRole}`, 'platoon');
+                    return { ...m, role: nextRole };
+                }));
+            };
+
+            const startMemberEntry = (id) => {
+                if (!memberEntryTimes[id]) {
+                    if (memberFinishedTimes[id]) {
+                        const newFinished = { ...memberFinishedTimes };
+                        delete newFinished[id];
+                        setMemberFinishedTimes(newFinished);
+                    }
+                    setMemberEntryTimes(prev => ({ ...prev, [id]: Date.now() }));
+                    const member = members.find(m => m.id === id);
+                    addLog(`【進入開始】${member.name}`, 'alert');
+                }
+            };
+
+            const stopMemberEntry = (id) => {
+                if (memberEntryTimes[id]) {
+                    const startTime = memberEntryTimes[id];
+                    const duration = Math.floor((Date.now() - startTime) / 1000);
+                    const m = Math.floor(duration / 60).toString().padStart(2, '0');
+                    const s = (duration % 60).toString().padStart(2, '0');
+                    const timeStr = `${m}:${s}`;
+                    
+                    const member = members.find(m => m.id === id);
+                    addLog(`【進入終了】${member.name} 活動時間: ${timeStr}`, 'info');
+                    
+                    setMemberFinishedTimes(prev => ({ ...prev, [id]: timeStr }));
+                    const newTimes = { ...memberEntryTimes };
+                    delete newTimes[id];
+                    setMemberEntryTimes(newTimes);
+                }
+            };
+
+            const startAllEntry = () => {
+                const entryMembers = members.filter(m => m.role === "進入");
+                if (entryMembers.length === 0) {
+                    alert("「進入」役割の隊員がいません。");
+                    return;
+                }
+                const now = Date.now();
+                const newTimes = { ...memberEntryTimes };
+                const newFinished = { ...memberFinishedTimes };
+
+                entryMembers.forEach(m => {
+                    if(!newTimes[m.id]) {
+                        newTimes[m.id] = now;
+                        if (newFinished[m.id]) delete newFinished[m.id];
+                    }
+                });
+                
+                setMemberFinishedTimes(newFinished);
+                setMemberEntryTimes(newTimes);
+                addLog(`【一斉進入】${entryMembers.length}名 開始`, 'alert');
+            };
+
+            const formatDuration = (startTime) => {
+                if (!startTime) return "00:00";
+                const secs = Math.floor((Date.now() - startTime) / 1000);
+                const m = Math.floor(secs / 60).toString().padStart(2, '0');
+                const s = (secs % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            };
+
+            const getTimerStyle = (startTime) => {
+                if (!startTime) return "text-gray-400";
+                const secs = Math.floor((Date.now() - startTime) / 1000);
+                if (secs > 1200) return "text-red-600 animate-pulse font-bold"; // 20分超
+                if (secs > 900) return "text-yellow-600 font-bold"; // 15分超
+                return "text-slate-800 font-bold";
+            };
+
+            const handleSquadCheck = (label) => {
+                const timeString = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                if (!platoonChecks[label]) {
+                    setPlatoonChecks(prev => ({ ...prev, [label]: timeString }));
+                    addLog(`【小隊】確認: ${label}`, 'check');
+                } else {
+                    setPlatoonChecks(prev => ({ ...prev, [label]: null }));
+                    addLog(`[取消] 小隊確認: ${label}`, 'info');
+                }
+            };
+
+            const handleReport = (target) => {
+                if(window.confirm(`${target}へ無線送信しますか？`)) {
+                    addLog(`【報告】${target}へ状況報告`, 'report');
+                }
+            };
+
+            const orderPresets = [
+                { 
+                    label: "現着・待機命令", 
+                    echo: "現着、風上にて待機。了解。", 
+                    tasks: ["車両を風上に部署", "窓閉鎖・外気遮断", "隊員は車内待機"] 
+                },
+                { 
+                    label: "進入準備命令", 
+                    echo: "進入準備、了解。", 
+                    tasks: ["進入隊員2名指名(レベルA/B)", "バックアップ隊員指名", "除染所の設営準備"] 
+                },
+                { 
+                    label: "進入開始命令", 
+                    echo: "進入開始、了解。", 
+                    tasks: ["面体密着テスト(Fit Check)", "ボンベ残圧相互確認", "無線感度試験", "進入時間管理スタート"] 
+                },
+                { 
+                    label: "緊急退避命令", 
+                    echo: "緊急退避、了解！総員退避！", 
+                    tasks: ["進入隊員へ退避指示(無線)", "除染シャワー全開", "人員確認(点呼)"] 
+                }
+            ];
+
+            const currentPreset = orderPresets.find(p => p.label === selectedOrder);
+            const entryMembers = members.filter(m => m.role === "進入");
+
+            const sections = [
+                {
+                    id: 1,
+                    title: "出動・積載（小隊）",
+                    color: "border-red-500",
+                    bgColor: "bg-red-50",
+                    items: [
+                        { id: 1, label: "個人装備（防火衣・呼吸器）着装確認" },
+                        { id: 2, label: "個人線量計のリセット・装着" },
+                        { id: 3, label: "隊員無線の通話試験（全数）" },
+                        { id: 4, label: "検索用資機材（ロープ等）の積載" },
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "車内・任務付与",
+                    color: "border-orange-500",
+                    bgColor: "bg-orange-50",
+                    items: [
+                        { id: 1, label: "隊員への簡易任務付与（誰が何をするか）" },
+                        { id: 2, label: "現場地図・進入経路の確認" },
+                        { id: 3, label: "風向・風速の周知" },
+                        { id: 4, label: "体調確認（顔色・自己申告）" },
+                    ]
+                },
+                {
+                    id: 3,
+                    title: "現着・下車",
+                    color: "border-yellow-500",
+                    bgColor: "bg-yellow-50",
+                    items: [
+                        { id: 1, label: "下車時の安全確認（風上側へ）" },
+                        { id: 2, label: "隊員集結・人員報告" },
+                        { id: 3, label: "車両部署位置の安全確認" },
+                        { id: 4, label: "一般市民への退避呼びかけ（肉声/拡声器）" },
+                    ]
+                }
+            ];
+
+            return (
+                <div className="p-2 pb-24 space-y-4">
+                    {sections.map((section) => (
+                        <div key={section.id} className={`bg-white rounded-lg shadow-sm border-l-4 overflow-hidden ${section.color}`}>
+                            <div className={`p-3 flex justify-between items-center cursor-pointer ${section.bgColor}`} onClick={() => toggleSection(section.id)}>
+                                <h3 className="font-bold text-gray-800 flex items-center">
+                                    <span className="w-6 h-6 rounded-full bg-white text-gray-600 border border-gray-300 flex items-center justify-center text-xs mr-2 shadow-sm">{section.id}</span>
+                                    {section.title}
+                                </h3>
+                                {openSections[section.id] ? <ChevronUp size={20} className="text-gray-500" /> : <ChevronDown size={20} className="text-gray-500" />}
+                            </div>
+                            {openSections[section.id] && (
+                                <div className="p-3 border-t border-gray-100">
+                                    <div className="space-y-2">
+                                        <div className="flex text-xs text-gray-400 px-1 mb-1">
+                                            <span className="flex-1">項目</span>
+                                            <span className="w-20 text-center">指示</span>
+                                            <span className="w-20 text-center">確認</span>
+                                        </div>
+                                        {section.items.map((item) => {
+                                            const key = `${section.id}-${item.id}`;
+                                            const state = itemStates[key] || { instructed: null, confirmed: null };
+                                            return (
+                                                <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                                    <div className="flex-1 pr-2 text-sm font-medium text-gray-700">{item.label}</div>
+                                                    <div className="flex space-x-2">
+                                                        <ActionButton label="指示" icon={Mic} state={state.instructed} onClick={() => handleAction(section.id, item.id, item.label, 'instructed')} color="blue" />
+                                                        <ActionButton label="確認" icon={Eye} state={state.confirmed} onClick={() => handleAction(section.id, item.id, item.label, 'confirmed')} color="green" />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+
+                    <div className={`bg-white rounded-lg shadow-sm border-l-4 overflow-hidden border-blue-500`}>
+                        <div className={`p-3 flex justify-between items-center cursor-pointer bg-blue-50`} onClick={() => toggleSection(4)}>
+                            <h3 className="font-bold text-gray-800 flex items-center">
+                                <span className="w-6 h-6 rounded-full bg-white text-gray-600 border border-gray-300 flex items-center justify-center text-xs mr-2 shadow-sm">4</span>
+                                活動展開・隊員管理
+                            </h3>
+                            {openSections[4] ? <ChevronUp size={20} className="text-gray-500" /> : <ChevronDown size={20} className="text-gray-500" />}
+                        </div>
+                        
+                        {openSections[4] && (
+                            <div className="p-3 border-t border-gray-100 space-y-4">
+                                
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={() => handleReport("指揮本部（大隊長）")} className="flex flex-col items-center justify-center p-3 bg-indigo-600 text-white rounded-lg shadow active:scale-95">
+                                        <Radio size={20} className="mb-1" />
+                                        <span className="text-xs font-bold">指揮本部へ報告</span>
+                                    </button>
+                                    <button onClick={() => handleReport("指令センター")} className="flex flex-col items-center justify-center p-3 bg-slate-600 text-white rounded-lg shadow active:scale-95">
+                                        <Send size={20} className="mb-1" />
+                                        <span className="text-xs font-bold">指令センターへ報告</span>
+                                    </button>
+                                </div>
+
+                                {/* 指示・復唱エリア */}
+                                <div className="bg-white rounded-lg shadow-sm border border-indigo-200 overflow-hidden">
+                                    <div className="p-3 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
+                                        <span className="font-bold text-indigo-900 flex items-center">
+                                            <Radio size={18} className="mr-2" />
+                                            大隊長指示 ⇒ 小隊指示
+                                        </span>
+                                    </div>
+                                    <div className="p-3 space-y-3">
+                                        <select className="w-full p-2 border border-gray-300 rounded text-sm bg-white" value={selectedOrder} onChange={(e) => { setSelectedOrder(e.target.value); setIsOrderEchoed(false); }}>
+                                            <option value="">-- 指示を選択してください --</option>
+                                            {orderPresets.map(p => <option key={p.label} value={p.label}>{p.label}</option>)}
+                                        </select>
+                                        {currentPreset && (
+                                            <div className="animate-fade-in">
+                                                <button onClick={() => { setIsOrderEchoed(true); addLog(`【復唱】${currentPreset.echo}`, 'report'); }} className={`w-full py-2 rounded font-bold text-sm mb-3 flex items-center justify-center transition-colors ${isOrderEchoed ? 'bg-gray-200 text-gray-500 cursor-default' : 'bg-orange-500 hover:bg-orange-600 text-white shadow'}`}>
+                                                    <Mic size={16} className="mr-2" />{isOrderEchoed ? "復唱済み" : `「${currentPreset.echo}」`}
+                                                </button>
+                                                {isOrderEchoed && (
+                                                    <div className="bg-orange-50 p-3 rounded border border-orange-200">
+                                                        <div className="text-xs font-bold text-orange-800 mb-2 flex items-center"><Users size={14} className="mr-1" />隊員への具体的指示</div>
+                                                        <div className="space-y-2">
+                                                            {currentPreset.tasks.map((task, idx) => (
+                                                                <button key={idx} onClick={() => handleSquadCheck(`[指示] ${task}`)} className={`w-full text-left p-2 rounded text-sm border flex justify-between items-center ${platoonChecks[`[指示] ${task}`] ? 'bg-green-100 border-green-300 text-green-800' : 'bg-white border-orange-200 text-gray-800 hover:bg-orange-100'}`}>
+                                                                    <span>{task}</span>{platoonChecks[`[指示] ${task}`] && <CheckCircle size={14} />}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                {/* 隊員ステータス盤 */}
+                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                                    <h3 className="font-bold text-gray-800 flex items-center mb-3">
+                                        <Users size={18} className="mr-2 text-yellow-600" />
+                                        隊員管理ステータス
+                                        <span className="text-xs font-normal text-gray-500 ml-auto">右側タップで役割変更</span>
+                                    </h3>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        {members.map(m => (
+                                            <div key={m.id} className={`flex items-center justify-between p-1 pl-2 pr-1 rounded border-2 transition-all ${m.role === "進入" ? "bg-red-50 border-red-500 shadow-sm" : m.role === "除染" ? "bg-yellow-50 border-yellow-400" : m.role === "支援" ? "bg-blue-50 border-blue-300" : "bg-gray-50 border-gray-200"}`}>
+                                                <div className="flex items-center flex-1 mr-2">
+                                                    <Edit3 size={14} className="text-gray-400 mr-1 flex-none" />
+                                                    <input type="text" value={m.name} onChange={(e) => handleNameChange(m.id, e.target.value)} className="w-full bg-transparent border-b border-dashed border-gray-400 focus:border-blue-500 focus:outline-none text-gray-800 font-bold py-1" placeholder={`隊員${m.id}`} />
+                                                </div>
+                                                <div onClick={() => toggleRole(m.id)} className={`w-20 text-center font-bold px-2 rounded py-2 cursor-pointer select-none text-xs ${m.role === "進入" ? "text-white bg-red-600 shadow" : m.role === "除染" ? "text-yellow-900 bg-yellow-400 shadow" : m.role === "支援" ? "text-white bg-blue-500 shadow" : "text-gray-500 bg-gray-200"}`}>
+                                                    {m.role}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* ホットゾーン活動タイマー (個人管理) */}
+                                <div className="bg-white rounded-lg shadow-sm border-l-4 border-red-600 p-4">
+                                    <h3 className="font-bold text-red-800 flex items-center mb-3">
+                                        <Timer size={18} className="mr-2" />
+                                        ホットゾーン活動管理 (個人別)
+                                    </h3>
+                                    
+                                    <div className="space-y-3">
+                                        {/* 進入役割の隊員リスト */}
+                                        {entryMembers.length > 0 ? (
+                                            entryMembers.map(m => (
+                                                <div key={m.id} className="flex items-center justify-between bg-red-50 p-2 rounded border border-red-100">
+                                                    <div className="font-bold text-gray-800 w-24 truncate">{m.name}</div>
+                                                    
+                                                    {/* タイマー表示部分 */}
+                                                    <div className={`font-mono text-xl w-24 text-center ${memberEntryTimes[m.id] ? getTimerStyle(memberEntryTimes[m.id]) : 'text-gray-500'}`}>
+                                                        {memberEntryTimes[m.id] 
+                                                            ? formatDuration(memberEntryTimes[m.id]) 
+                                                            : (memberFinishedTimes[m.id] ? <span className="text-sm text-blue-600">了 {memberFinishedTimes[m.id]}</span> : "00:00")
+                                                        }
+                                                    </div>
+
+                                                    <button 
+                                                        onClick={() => memberEntryTimes[m.id] ? stopMemberEntry(m.id) : startMemberEntry(m.id)}
+                                                        className={`px-3 py-2 rounded text-xs font-bold shadow-sm flex items-center ${
+                                                            memberEntryTimes[m.id] 
+                                                                ? 'bg-gray-600 text-white hover:bg-gray-700' 
+                                                                : 'bg-red-600 text-white hover:bg-red-700'
+                                                        }`}
+                                                    >
+                                                        {memberEntryTimes[m.id] ? <StopCircle size={16} className="mr-1" /> : <Play size={16} className="mr-1" />}
+                                                        {memberEntryTimes[m.id] ? '終了' : '開始'}
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center text-gray-400 text-sm py-2">
+                                                「進入」役割の隊員がいません
+                                            </div>
+                                        )}
+
+                                        {/* 一括開始ボタン */}
+                                        {entryMembers.length > 1 && !entryMembers.every(m => memberEntryTimes[m.id]) && (
+                                            <div className="pt-2 border-t border-red-100">
+                                                <button 
+                                                    onClick={startAllEntry}
+                                                    className="w-full bg-red-100 text-red-800 hover:bg-red-200 font-bold py-2 rounded flex items-center justify-center text-sm"
+                                                >
+                                                    <Activity size={16} className="mr-2" />
+                                                    進入隊員 一括開始
+                                                </button>
+                                            </div>
+                                        )}
+                                        
+                                        <p className="text-xs text-gray-500 mt-2 text-center">
+                                            <span className="text-yellow-600 font-bold">15分</span>、<span className="text-red-600 font-bold">20分</span>経過で警告表示
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="pt-6 pb-8">
+                        <button onClick={finishMission} className="w-full bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center text-lg hover:bg-slate-700">
+                            <Save className="mr-2" />
+                            活動終了・記録保存
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function ActionButton({ label, icon: Icon, state, onClick, color }) {
+            const baseClass = `w-20 h-12 rounded flex flex-col items-center justify-center transition-all shadow-sm border active:scale-95`;
+            const activeClass = color === 'blue' ? 'bg-blue-600 text-white border-blue-700' : 'bg-green-600 text-white border-green-700';
+            const inactiveClass = 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50';
+
+            return (
+                <button onClick={onClick} className={`${baseClass} ${state ? activeClass : inactiveClass}`}>
+                    {state ? (
+                        <>
+                            <span className="text-[13px] font-mono font-bold leading-none">{state}</span>
+                            <span className="text-[9px] opacity-80 leading-none mt-0.5">済</span>
+                        </>
+                    ) : (
+                        <>
+                            <Icon size={18} className="mb-0.5" />
+                            <span className="text-[10px] leading-none">{label}</span>
+                        </>
+                    )}
+                </button>
+            );
+        }
+
+        // アプリケーションをマウント
+        const root = createRoot(document.getElementById('root'));
+        root.render(<NBCWorksheetApp />);
+    </script>
 </body>
 </html>
