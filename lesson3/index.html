@@ -3,387 +3,1128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学習ガイド＋単語帳：火災警報・林野火災警報</title>
+    <title>大船渡市大規模林野火災の教訓 e-Learning</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Custom Animation Styles (simulating tailwindcss-animate) -->
     <style>
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background-color: #fff7ed; /* Orange-50 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        .card-shadow {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        @keyframes slideInFromTop {
+            from { transform: translateY(-1rem); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-        .marker-highlight {
-            background: linear-gradient(transparent 60%, #fed7aa 60%);
+        @keyframes slideInFromBottom {
+            from { transform: translateY(1rem); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes zoomIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
         
-        /* ---------------------------------------------------------
-           修正版：より堅牢なフリップカードCSS
-           --------------------------------------------------------- */
-        .flashcard-container {
-            perspective: 1000px;
-            width: 100%;
-            height: 300px; /*高さを固定して安定させる*/
-            cursor: pointer;
-        }
-
-        .flashcard-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 1rem;
-        }
-
-        /* JavaScriptで .is-flipped クラスがついた時に回転 */
-        .flashcard-inner.is-flipped {
-            transform: rotateY(180deg);
-        }
-
-        .flashcard-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            -webkit-backface-visibility: hidden; /* Safari用 */
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            border-radius: 1rem;
-            top: 0;
-            left: 0;
-        }
-
-        /* 表面 */
-        .flashcard-front {
-            background-color: #ffffff;
-            color: #1f2937;
-            border: 2px solid #fdba74; /* orange-300 */
-            z-index: 2;
-            transform: rotateY(0deg); /* 明示的に指定 */
-        }
-
-        /* 裏面 */
-        .flashcard-back {
-            background-color: #ffedd5; /* orange-100 */
-            color: #9a3412; /* orange-800 */
-            border: 2px solid #f97316; /* orange-500 */
-            transform: rotateY(180deg);
-        }
+        .animate-in { animation-duration: 300ms; animation-fill-mode: forwards; }
+        .fade-in { animation-name: fadeIn; }
+        .slide-in-from-top-4 { animation-name: slideInFromTop; }
+        .slide-in-from-bottom-4 { animation-name: slideInFromBottom; }
+        .zoom-in-95 { animation-name: zoomIn; }
     </style>
 </head>
-<body class="text-gray-800 antialiased pb-20">
+<body class="bg-slate-900 text-slate-200">
+    <div id="root"></div>
 
-    <!-- Header Section -->
-    <header class="bg-gradient-to-r from-orange-600 to-red-600 text-white py-8 shadow-lg">
-        <div class="container mx-auto px-4 max-w-4xl">
-            <div class="flex items-center gap-2 mb-2 opacity-90 text-sm font-bold tracking-wider uppercase">
-                <i class="fa-solid fa-shield-halved"></i>
-                <span>防災・安全管理</span>
-            </div>
-            <h1 class="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-                火災警報・林野火災警報<br>学習ガイド
-            </h1>
-            <p class="text-orange-100 text-lg">
-                消防法に基づく警報の仕組みと、気象条件による火災リスクを学ぶ
-            </p>
-        </div>
-    </header>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
-    <main class="container mx-auto px-4 max-w-4xl py-8 space-y-10">
+        // --- Icons (Inline SVGs to avoid dependencies) ---
+        
+        const BookOpen = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        );
+        const CheckCircle = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        );
+        const XCircle = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        );
+        const RefreshCw = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        );
+        const Award = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        );
+        const AlertCircle = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        );
 
-        <!-- Summary Section -->
-        <section class="bg-white rounded-xl p-6 card-shadow border-l-4 border-orange-500">
-            <h2 class="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-book-open text-orange-500"></i> 概要
-            </h2>
-            <p class="leading-relaxed text-gray-600">
-                このガイドは、日本の消防法に基づく「火災警報」および「林野火災警報」について解説します。警報の発令条件、権限者、市民への制限事項、そして林野火災の原因について学びましょう。
-            </p>
-        </section>
+        // --- Data ---
 
-        <!-- FLASHCARD SECTION (Fixed) -->
-        <section id="flashcards-area" class="scroll-mt-4">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-orange-600"></i> 暗記カード
-                </h2>
-                <span class="text-sm bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-bold" id="card-counter">1 / 25</span>
-            </div>
-            
-            <!-- Card Container -->
-            <div class="flashcard-container group" onclick="flipCard()">
-                <div id="flashcard-inner" class="flashcard-inner">
-                    <!-- Front -->
-                    <div class="flashcard-face flashcard-front">
-                        <div class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-4">QUESTION</div>
-                        <p id="card-front-text" class="text-xl md:text-2xl font-bold text-center leading-relaxed">
-                            Loading...
-                        </p>
-                        <div class="mt-6 text-gray-400 text-xs flex items-center gap-1">
-                            <i class="fa-solid fa-rotate"></i> クリックして答えを表示
-                        </div>
-                    </div>
-                    <!-- Back -->
-                    <div class="flashcard-face flashcard-back">
-                        <div class="text-xs font-bold text-orange-700 uppercase tracking-widest mb-4">ANSWER</div>
-                        <p id="card-back-text" class="text-lg md:text-xl font-bold text-center leading-relaxed">
-                            Loading...
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Controls -->
-            <div class="mt-6 flex justify-center gap-4">
-                <button onclick="prevCard(event)" class="bg-white hover:bg-gray-50 text-gray-700 font-bold py-2 px-6 rounded-lg shadow border border-gray-200 transition-transform active:scale-95 flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-left"></i> 前へ
-                </button>
-                <button onclick="shuffleCards(event)" class="bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold py-2 px-4 rounded-lg shadow border border-orange-200 transition-transform active:scale-95" title="シャッフル">
-                    <i class="fa-solid fa-shuffle"></i>
-                </button>
-                <button onclick="nextCard(event)" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-orange-200 transition-transform active:scale-95 flex items-center gap-2">
-                    次へ <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </div>
-        </section>
-
-        <!-- Topics Grid -->
-        <section>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">学習トピック要点</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-lg card-shadow flex items-start gap-3">
-                    <div class="bg-red-100 text-red-600 p-2 rounded-full shrink-0">
-                        <i class="fa-solid fa-gavel"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-800">法的根拠とプロセス</h3>
-                        <p class="text-sm text-gray-600 mt-1">消防法第22条に基づき、主に市町村長が発令します。</p>
-                    </div>
-                </div>
-                <div class="bg-white p-4 rounded-lg card-shadow flex items-start gap-3">
-                    <div class="bg-blue-100 text-blue-600 p-2 rounded-full shrink-0">
-                        <i class="fa-solid fa-cloud-sun"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-800">気象条件とリスク</h3>
-                        <p class="text-sm text-gray-600 mt-1">実効湿度60%以下、風速10m/s以上などが目安。</p>
-                    </div>
-                </div>
-                <div class="bg-white p-4 rounded-lg card-shadow flex items-start gap-3">
-                    <div class="bg-yellow-100 text-yellow-600 p-2 rounded-full shrink-0">
-                        <i class="fa-solid fa-ban"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-800">制限事項と罰則</h3>
-                        <p class="text-sm text-gray-600 mt-1">火入れやたき火が禁止。違反は30万円以下の罰金。</p>
-                    </div>
-                </div>
-                <div class="bg-white p-4 rounded-lg card-shadow flex items-start gap-3">
-                    <div class="bg-green-100 text-green-600 p-2 rounded-full shrink-0">
-                        <i class="fa-solid fa-tree"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-800">林野火災の特徴</h3>
-                        <p class="text-sm text-gray-600 mt-1">春先に多発。たき火等の人為的原因が大部分。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Key Concepts Comparison -->
-        <section class="space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <i class="fa-solid fa-lightbulb text-yellow-500"></i> 重要コンセプト比較
-            </h2>
-            <div class="bg-white rounded-xl overflow-hidden card-shadow">
-                <div class="bg-gray-50 px-6 py-3 border-b border-gray-100 font-bold text-gray-700">
-                    乾燥注意報 vs 火災警報
-                </div>
-                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <h4 class="text-blue-600 font-bold mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-triangle-exclamation"></i> 乾燥注意報
-                        </h4>
-                        <ul class="list-disc list-inside text-gray-600 space-y-1 text-sm">
-                            <li>発表：<span class="font-bold">気象庁</span></li>
-                            <li>性質：<span class="marker-highlight">予報</span>（注意喚起）</li>
-                            <li>罰則：なし</li>
-                        </ul>
-                    </div>
-                    <div class="border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-8">
-                        <h4 class="text-red-600 font-bold mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-bullhorn"></i> 火災警報
-                        </h4>
-                        <ul class="list-disc list-inside text-gray-600 space-y-1 text-sm">
-                            <li>発令：<span class="font-bold">市町村長</span></li>
-                            <li>性質：<span class="marker-highlight">命令</span>（法的拘束力）</li>
-                            <li>罰則：あり</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Interactive Questions (Review) -->
-        <section class="pb-10">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-circle-question text-green-500"></i> 最終確認テスト
-            </h2>
-            <div class="space-y-3">
-                <div class="group cursor-pointer" onclick="toggleAnswer('ans1')">
-                    <div class="bg-white p-4 rounded-lg card-shadow hover:bg-orange-50 transition-colors border-l-4 border-gray-300 group-hover:border-orange-400">
-                        <div class="flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 text-sm md:text-base">Q1. 実効湿度とは何ですか？</h3>
-                            <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-orange-500"></i>
-                        </div>
-                        <div id="ans1" class="hidden mt-4 pt-4 border-t border-gray-100 text-blue-700 font-medium">
-                            A. 当日だけでなく、過去数日間の履歴を考慮した湿度。木材の乾燥度合いを示し、火災の起こりやすさの目安となります。
-                        </div>
-                    </div>
-                </div>
-                <div class="group cursor-pointer" onclick="toggleAnswer('ans2')">
-                    <div class="bg-white p-4 rounded-lg card-shadow hover:bg-orange-50 transition-colors border-l-4 border-gray-300 group-hover:border-orange-400">
-                        <div class="flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 text-sm md:text-base">Q2. フェーン現象が火災リスクを高める理由は？</h3>
-                            <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-orange-500"></i>
-                        </div>
-                        <div id="ans2" class="hidden mt-4 pt-4 border-t border-gray-100 text-blue-700 font-medium">
-                            A. 山を越えた風が急激に乾燥し高温になるため、物が燃えやすい状態を作り出すからです。
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <footer class="bg-gray-800 text-gray-400 py-8 text-center text-sm">
-        <p>&copy; Fire Safety Study Guide with Flashcards</p>
-    </footer>
-
-    <!-- JavaScript Logic -->
-    <script>
-        // Data Source
-        const originalFlashcards = [
-            { front: "火災警報の発令根拠となる法律", back: "消防法（第22条）" },
-            { front: "火災警報の発令権者（誰が出すか）", back: "市町村長（東京都23区など一部例外あり）" },
-            { front: "火災警報が発令される主な気象条件", back: "気象の状況が火災の予防上危険であると認められるとき（強風、異常乾燥など）" },
-            { front: "実効湿度（じっこうしつど）とは", back: "木材の乾燥度合いを表す指数。数日間の湿度の履歴を考慮して算出される" },
-            { front: "火災警報発令時の制限事項（例）", back: "山林・原野等での火入れ、たき火、喫煙、花火などの火気使用の制限・禁止" },
-            { front: "気象庁が発表する「乾燥注意報」と「火災警報」の違い", back: "乾燥注意報は「予報」。火災警報は消防法に基づく法的な「命令」" },
-            { front: "林野火災（山火事）の発生が多い季節", back: "春先（枯れ葉が多く、風が強く、空気が乾燥しやすいため）" },
-            { front: "林野火災の出火原因で最も多いもの", back: "たき火（次いで火入れ、タバコなど、人為的な原因が大部分）" },
-            { front: "火災警報の発令基準の例（湿度）", back: "実効湿度が60%以下、最小湿度が25%以下になる見込みのときなど" },
-            { front: "火災警報の発令基準の例（風速）", back: "平均風速が10m/sを超える見込みのときなど" },
-            { front: "「火入れ」とは", back: "土地の利用を目的として、その土地にある草木などを燃やすこと（野焼きなど）" },
-            { front: "林野火災警報の発令主体", back: "主に都道府県知事など（地域防災計画等に基づく）" },
-            { front: "フェーン現象と火災の関係", back: "山を越えて吹き下ろす風が乾燥・高温となり、火災リスクを急激に高める" },
-            { front: "火災気象通報", back: "気象庁から消防機関へ提供される、火災予防上注意を要する気象状況の情報" },
-            { front: "火災警報下での違反に対する罰則", back: "30万円以下の罰金または拘留（消防法第44条）" },
-            { front: "飛び火（とびひ）の危険性", back: "強風時には火の粉が数百メートル以上飛んで延焼を拡大させる現象" },
-            { front: "林野火災を防ぐためのハイキング時の注意点", back: "指定された場所以外での喫煙や火気使用を行わない。火の始末を確実に行う" },
-            { front: "空中消火", back: "林野火災など地上からの消火が困難な場所で、ヘリコプター等を用いて上空から水を散布すること" },
-            { front: "東京都における火災警報の発令権者", back: "東京消防庁消防総監（23区内）、各市町村長（多摩地域等）" },
-            { front: "乾燥注意報の発表基準（東京地方の例）", back: "最小湿度25%以下、かつ実効湿度50%以下" },
-            { front: "消防法第22条の目的", back: "火災の予防および警戒" },
-            { front: "林野火災が発生しやすい時間帯", back: "気温が上がり湿度が下がる昼過ぎから夕方にかけて" },
-            { front: "枯れ草の危険性", back: "着火しやすく、燃え広がる速度が非常に速いため、火災の媒体となりやすい" },
-            { front: "火災警報の解除", back: "気象状況が改善し、火災予防上の危険がなくなったと認められるときに行われる" },
-            { front: "自分の地域の火災警報を知る方法", back: "市町村の防災無線、広報車、ウェブサイト、防災アプリなど" }
+        const ALL_QUESTIONS = [
+          // I. 林野火災の予防と警報体制
+          {
+            id: "Q1", category: "I. 林野火災の予防と警報体制",
+            text: "大船渡市林野火災の検証で確認された、従来の消防法に基づく「火災警報」発令における消防本部の傾向として正しいものはどれですか?",
+            options: [
+              "発令することで罰則が適用されるため、発令が積極的であった。",
+              "発令に伴う火の使用制限の範囲が狭いため、発令しやすかった。",
+              "罰則を伴う火の取扱制限であるため、実態として発令が低調であった。",
+              "林野火災の危険性が高い時季のみ、自動的に発令されていた。"
+            ],
+            correctAnswer: 2,
+            explanation: "火災警報が罰則を伴う火の取扱制限であるため、消防本部が発令を躊躇し、実態として発令が低調な状況にあることが確認されました。"
+          },
+          {
+            id: "Q2", category: "I. 林野火災の予防と警報体制",
+            text: "火災警報の発令を躊躇する傾向を克服し、予防を目的として新たに創設が提言された警報の名称は何ですか?",
+            options: [
+              "(仮称)林野火災警戒情報",
+              "(仮称)林野火災予防情報",
+              "(仮称)林野火災注意報",
+              "(仮称)林野火災火気制限"
+            ],
+            correctAnswer: 2,
+            explanation: "林野火災の予防を目的として、従来の火災警報のような強い制限や罰則を伴わない（仮称）林野火災注意報を創設することが提言されています。"
+          },
+          {
+            id: "Q3", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災の予防において、最も効果的とされる（仮称）林野火災注意報の発令指標の基本的な考え方として適切でないものはどれですか?",
+            options: [
+              "強風注意報が発表されている場合。",
+              "（仮称）林野火災注意報の発令指標に加え、強風が予想される場合。",
+              "地域の実情に応じた調整を加えることが可能であること。",
+              "地域の気象特性等を踏まえて設定すること。"
+            ],
+            correctAnswer: 0,
+            explanation: "（仮称）林野火災警報は、（仮称）林野火災注意報の発令指標に加え、強風注意報が発表されている場合に発令することが考えられています。単独の強風注意報だけが指標ではありません。"
+          },
+          {
+            id: "Q4", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災の発生原因の大部分を占めている要因は何ですか?",
+            options: [
+              "落雷や自然発火などの自然的な要因",
+              "電力会社の電線ショート",
+              "人為的な要因（たき火、火入れ、タバコの不始末など）",
+              "地球温暖化による乾燥化"
+            ],
+            correctAnswer: 2,
+            explanation: "林野火災は、発生原因の大半が人為的な要因（たき火、火入れ等）によるものであることが確認されており、予防の実効性向上が重要です。"
+          },
+          {
+            id: "Q5", category: "I. 林野火災の予防と警報体制",
+            text: "火災予防条例（例）を改正し、（仮称）林野火災警報の発令時の火の使用制限に関して可能とすべきとされた対応はどれですか?",
+            options: [
+              "火の使用制限の範囲を全国一律とする。",
+              "火の使用制限の対象者を消防関係者に限定する。",
+              "林野火災の危険性に応じて対象地域を限定することを可能とする。",
+              "罰則を削除し、警報の強制力をなくす。"
+            ],
+            correctAnswer: 2,
+            explanation: "消防本部から、火災警報発令時の火の使用制限の範囲が広いことが発令しづらい一因と意見が出たため、対象地域を限定することを可能とすることで、的確な発令を促す必要があります。"
+          },
+          {
+            id: "Q6", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災の予防に向けた広報・啓発活動において、たき火や火入れを行う行為者に限らず、広く国民に周知するため活用を強化すべきとされた媒体はどれですか?",
+            options: [
+              "ポスター掲示",
+              "テレビ・ラジオ",
+              "SNSを始めとしたインターネット媒体",
+              "防災行政無線（同報系）"
+            ],
+            correctAnswer: 2,
+            explanation: "ポスターやテレビ、ラジオといった従前からの方法に加え、SNSを始めとしたインターネット媒体等も用い、都市部からのレジャー入山者など広く国民に対し周知することが重要です。"
+          },
+          {
+            id: "Q7", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災の発生危険度を評価するシステムを構築する際に、林床可燃物の水分含有率が何%以下になると「森林火災発生危険日」と判定される可能性が高まりますか?",
+            options: ["10%以下", "20%以下", "30%以下", "50%以下"],
+            correctAnswer: 1,
+            explanation: "林床に堆積する落葉や下草などの可燃物の水分含有率が20%以下になると、火種があれば燃焼が始まる可能性が高まるとされています。"
+          },
+          {
+            id: "Q8", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災における延焼危険日を予測する際の延焼速度の基準値として、過去の事例に基づき設定されたものはどれですか?",
+            options: ["100 m/h 以上", "200 m/h 以上", "400 m/h 以上", "800 m/h 以上"],
+            correctAnswer: 2,
+            explanation: "延焼危険日の予測基準として、過去の研究事例に基づき、延焼速度400m/h以上となる条件が危険度の基準値として設定されています。"
+          },
+          {
+            id: "Q9", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災の発生・拡大リスクの評価において、人口密度が考慮されるのはなぜですか?",
+            options: [
+              "人口密度が高いほど、消火栓が多いため。",
+              "人口密度と火災の発生頻度および焼損面積が密接に関連しているため。",
+              "人口密度が低い地域では森林火災は発生しないため。",
+              "人口密度は避難経路の困難さを示す指標であるため。"
+            ],
+            correctAnswer: 1,
+            explanation: "森林火災の発生・拡大リスクは人口密度と密接に関連しており、人口密度から林野火災発生頻度、焼損面積を推定した総合的な林野火災指標が作成・評価されています。"
+          },
+          {
+            id: "Q10", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災予防のために、市町村の火災予防条例（例）でたき火を届出の対象とすることが明確に位置付けられた場合、消防本部が次に実施すべきことは何ですか?",
+            options: [
+              "たき火の届出を全て拒否する。",
+              "届出を受けたたき火に対して罰則を適用する。",
+              "届出を把握し、消火準備等の防火指導につなげる。",
+              "届出対象地域を市街地に限定する。"
+            ],
+            correctAnswer: 2,
+            explanation: "各消防本部による把握を徹底し、消火準備等の防火指導につなげることが必要とされています。"
+          },
+          {
+            id: "Q11", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災の発生危険度予測システムで、林床可燃物含水比の算出に使用される気象データとして最も重要なのはどれですか?",
+            options: ["積雪深と湿度", "日射量と降水量", "風速と風向", "気温と気圧"],
+            correctAnswer: 1,
+            explanation: "林床可燃物含水比は、タンクモデルを使用して日射量と降水量を1時間ごとに入力して計算されます。"
+          },
+          {
+            id: "Q12", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災に強い地域づくりを進めるための具体的な対策として、森林整備の観点から推奨されているのはどれですか?",
+            options: [
+              "全ての林相を均一な人工林に置き換えること。",
+              "消火活動に資する林道整備や防火水槽の整備を進めること。",
+              "林内の可燃物を増やすために、病害虫の被害木を残すこと。",
+              "森林所有者や境界の情報を非公開にすること。"
+            ],
+            correctAnswer: 1,
+            explanation: "消火活動に資する林道等や、それらと一体となった防火水槽や防火林帯等の山火事防止施設整備により、迅速な初期消火や延焼防止に貢献することが期待されています。"
+          },
+          {
+            id: "Q13", category: "I. 林野火災の予防と警報体制",
+            text: "大船渡市林野火災を踏まえ、広範囲の顕著な少雨が確認された場合に効果的であるとされる、気象庁と消防庁による連携した周知活動はどれですか?",
+            options: [
+              "気象庁による震度情報の周知",
+              "消防庁による避難指示の発令",
+              "合同による臨時の記者会見等を通じた注意喚起・解説",
+              "林野庁による火入れの強制的な実施"
+            ],
+            correctAnswer: 2,
+            explanation: "広範囲の顕著な少雨が確認され、全国的な広がりがある場合には、気象庁と消防庁との合同による臨時の記者会見等を通じた注意喚起・解説を行うことなどが効果的であると考えられています。"
+          },
+          {
+            id: "Q14", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災の予防の実効性向上策に係る研究や、延焼シミュレーション技術の研究開発において活用される情報はどれですか?",
+            options: [
+              "土壌のpH値",
+              "地形や植生、気候条件等に応じた林野火災の発生危険度評価手法",
+              "林道等の配置情報のみ",
+              "地下街の構造データ"
+            ],
+            correctAnswer: 1,
+            explanation: "地形や植生、気候条件等に応じた林野火災の発生危険度評価手法を活用することが具体的に提言されています。"
+          },
+          {
+            id: "Q15", category: "I. 林野火災の予防と警報体制",
+            text: "火災予防条例の改正により、（仮称）林野火災注意報や（仮称）林野火災警報の発令対象地域を限定可能とすることが促される背景となった、消防本部からの意見として最も適切なものはどれですか?",
+            options: [
+              "火災警報発令時の火の使用制限の対象者が多すぎたこと。",
+              "火災警報発令時の火の使用制限の範囲が広いことや、管轄区域内の気象状況が地域によって異なること。",
+              "火災警報の罰則が軽すぎたこと。",
+              "火災警報の発令基準が乾燥指数のみであったこと。"
+            ],
+            correctAnswer: 1,
+            explanation: "火の使用制限の範囲が広いことや、管轄区域内の気象状況が地域によって異なることから、火災警報の発令がしづらい、との意見がみられたためです。"
+          },
+          {
+            id: "Q16", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災対応における消防団の重要な役割として、大船渡市林野火災の事例で特に確認された活動はどれですか?",
+            options: [
+              "航空部隊への給油支援のみ。",
+              "避難の呼びかけや避難誘導、消火隊と連携した消火や残火の処理。",
+              "専らヘリコプターによる空中消火活動。",
+              "広域連携における指揮支援隊の役割。"
+            ],
+            correctAnswer: 1,
+            explanation: "大船渡市消防団は、避難の呼びかけや誘導、消火隊と連携した消火や残火の処理、夜間の見回り等、初動から鎮火まで極めて重要な役割を担いました。"
+          },
+          {
+            id: "Q17", category: "I. 林野火災の予防と警報体制",
+            text: "大規模林野火災における消火活動の構造として、空中消火が主に担当すべき活動はどれですか?",
+            options: [
+              "市街地の延焼阻止線を設定する活動。",
+              "林野内に入り、直近の燃焼箇所を叩く活動。",
+              "延焼阻止線の内側の地上消火が困難な地域に対する消火活動。",
+              "消防水利の確保を目的とした遠距離送水。"
+            ],
+            correctAnswer: 2,
+            explanation: "地上消火は重要防御地点への延焼阻止を担い、空中消火は延焼阻止線の内側の地上消火が困難な地域に対する消火活動を行うなど、役割分担が重要です。"
+          },
+          {
+            id: "Q18", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災発生時、市町村長が消防防災航空隊へ速やかに第一報を入れる主な目的は何ですか?",
+            options: [
+              "消防法に基づく罰則を回避するため。",
+              "空中消火の技術指導を受けるため。",
+              "当該航空隊が出動に備えた消火資機材の装着や準備を早期に行えるようにするため。",
+              "航空部隊の隊員の疲労管理を担ってもらうため。"
+            ],
+            correctAnswer: 2,
+            explanation: "第一報を入れることで、航空隊が出動に備えた消火資機材の装着や準備を早期に行えるようにすることが要請されています。"
+          },
+          {
+            id: "Q19", category: "I. 林野火災の予防と警報体制",
+            text: "林野火災において自衛隊の大型ヘリによる空中消火活動が特に有効であるとされる理由は何ですか?",
+            options: [
+              "消防防災ヘリより燃料消費が少ないため。",
+              "山火事予防啓発に貢献するため。",
+              "大型で散水量が大きいため、火勢の強い箇所を担当できること。",
+              "夜間でも安全に飛行できる技術を持っているため。"
+            ],
+            correctAnswer: 2,
+            explanation: "散水量の大きい自衛隊の大型ヘリによる空中消火が有効であり、火勢の強い箇所を担当するなど、消防防災ヘリと役割分担を行うことが重要です。"
+          },
+          {
+            id: "Q20", category: "I. 林野火災の予防と警報体制",
+            text: "自衛隊の大型ヘリが林野火災で活動するために、地方公共団体が平時の段階から準備しておくことが求められる「活動基盤」とは、具体的に何ですか?",
+            options: [
+              "消防職員の交代要員リスト。",
+              "大量の消火用水を取水する取水点、補給や整備のための一定の地積を有する展開地や燃料車が進入可能な活動基盤。",
+              "林野火災発生危険度予測システム。",
+              "住民の避難経路図のみ。"
+            ],
+            correctAnswer: 1,
+            explanation: "大量の消火用水を取水する取水点に加え、補給・整備等のための展開地や大型車等が進入可能な活動基盤の平時からの確保が求められます。"
+          },
+          // II. 地上活動と資源・資機材管理
+          {
+            id: "Q21", category: "II. 地上活動と資源・資機材管理",
+            text: "林野火災では、水利確保が大きな課題となりますが、海や河川等の自然水利を活用できるシステムとして整備推進が必要なものは何ですか?",
+            options: ["大型水槽付き化学車", "海水利用型消防水利システム（スーパーポンパー）", "ウォーターカッター装置", "簡易消火用ドローン"],
+            correctAnswer: 1,
+            explanation: "海や河川等の自然水利を消防用水として活用できる海水利用型消防水利システム（スーパーポンパー）等の整備を進める必要があります。"
+          },
+          {
+            id: "Q22", category: "II. 地上活動と資源・資機材管理",
+            text: "山間部における林野火災の消火活動で、再燃を確実に防止するために特に整備が必要とされた個人用資機材は何ですか?",
+            options: ["ウォーターカッター装置", "可搬式の照明", "背負い式消火水のう", "高機能救命ボート"],
+            correctAnswer: 2,
+            explanation: "一度消火活動を行った箇所での再燃が頻出したことを踏まえ、確実な残火処理のために必要な背負い式消火水のう等の資機材整備が必要です。"
+          },
+          {
+            id: "Q23", category: "II. 地上活動と資源・資機材管理",
+            text: "山間部での部隊投入の課題として、複雑な地形や狭隘な道が多く、進入に苦慮したことが挙げられます。これに対応するため、整備が必要な車両は何ですか?",
+            options: ["大型化学消防車", "拠点機能形成車", "林野火災対応ユニット車", "特殊災害対応自動車"],
+            correctAnswer: 2,
+            explanation: "山林内でも走破性が高く、資機材を搭載した林野火災対応ユニット車を整備していくことが必要です。"
+          },
+          {
+            id: "Q24", category: "II. 地上活動と資源・資機材管理",
+            text: "林野火災の消火活動において、水利確保の課題を補完するため、建設業等の民間事業者と連携を強化する必要があるとされた車両は何ですか?",
+            options: ["消防ヘリコプター", "救急車", "コンクリートミキサー車やコンクリートポンプ車", "特殊標章をつけた車両"],
+            correctAnswer: 2,
+            explanation: "コンクリートミキサー車やポンプ車等の活用に関して協定等を締結し、消防用水の確保等に関する連携を強化する必要があります。"
+          },
+          {
+            id: "Q25", category: "II. 地上活動と資源・資機材管理",
+            text: "樹木や落ち葉等に覆われて燃焼箇所が不明確になりがちな林野内において、消火活動を行う地点を確定し、消火効果を確認する上で効果的な資機材は何ですか?",
+            options: ["高機能救命ボート", "可搬式の照明", "ドローンの熱源探査や熱画像直視装置", "消防団員の処遇改善のためのマニュアル"],
+            correctAnswer: 2,
+            explanation: "燃焼箇所が不明確になりがちな林野内では、ドローンの熱源探査や熱画像直視装置を用いた活動が効果的です。"
+          },
+          {
+            id: "Q26", category: "II. 地上活動と資源・資機材管理",
+            text: "林野火災における消火活動として、延焼阻止に重点を置いた消火法は何と呼ばれますか?",
+            options: ["直接消火", "残火処理", "間接消火", "空中散水"],
+            correctAnswer: 2,
+            explanation: "延焼が広範囲に及ぶ林野火災においては、間接消火（延焼抑止に重点を置いた消火法）の活用が検討されています。"
+          },
+          {
+            id: "Q27", category: "II. 地上活動と資源・資機材管理",
+            text: "消火薬剤の活用が検討されている背景として、主にどのような状況下での消火効果向上が期待されていますか?",
+            options: ["市街地火災での建物消火時。", "大量の水を使用して広範囲を一気に消火する際。", "残火処理など散水場所が限定される場合に、少ない散水量で効果を出すため。", "海水利用型消防水利システムを使用する際。"],
+            correctAnswer: 2,
+            explanation: "消火薬剤（泡・浸潤剤など）は、残火処理など散水場所が限定される場合に、少ない散水量での消火効果が期待できるためです。"
+          },
+          {
+            id: "Q28", category: "II. 地上活動と資源・資機材管理",
+            text: "林野火災の対応において、陸上部隊が進出困難な複雑な地形や狭隘な山間部で効果的な消火手段とされるものは何ですか?",
+            options: ["背負い式消火水のう", "航空機による空中消火", "遠距離送水システム", "ドライブレコーダー映像の活用"],
+            correctAnswer: 1,
+            explanation: "航空機による空中消火は、陸上部隊が進出困難な複雑な地形や狭隘な山間部において効果的な消火手段です。"
+          },
+          {
+            id: "Q29", category: "II. 地上活動と資源・資機材管理",
+            text: "山間部における消防活動の安全管理上、特に留意し、対応要領の整理と周知が求められている山間地特有の危険性として挙げられているものはどれですか?",
+            options: ["交通事故や市街地での飛び火", "設備の老朽化による崩壊", "滑落、落石、倒木、野生動物対策、遭難や火煙に囲まれる危険性", "通信インフラの途絶"],
+            correctAnswer: 2,
+            explanation: "滑落、落石、倒木、野生動物対策をはじめ、遭難や火煙に囲まれる危険性までも想定した安全管理が求められています。"
+          },
+          {
+            id: "Q30", category: "II. 地上活動と資源・資機材管理",
+            text: "林野火災対応ユニット車に積載される資機材の例として適切でないものはどれですか?",
+            options: ["大型仮設水槽", "背負い式消火水のう", "熱画像直視装置", "高層建物対応はしご"],
+            correctAnswer: 3,
+            explanation: "林野火災対応ユニット車は、簡易水槽やポンプ、背負い式消火水のうなど林野火災に特化した資機材を搭載します。高層用はしごは都市部向けです。"
+          },
+          {
+            id: "Q31", category: "II. 地上活動と資源・資機材管理",
+            text: "大規模林野火災後の森林では、土砂流出等の山地災害リスクが高まるおそれがあるため、二次災害防止活動として適切に行うべき対策は何ですか?",
+            options: ["林道整備を中止する。", "危険箇所の調査・点検、治山施設の整備を行う。", "森林所有者の情報を破棄する。", "土壌の吸水・保水能力が増加するため、特に対策は不要とする。"],
+            correctAnswer: 1,
+            explanation: "樹木の焼失により吸水・保水能力が低下し山地災害リスクが高まるため、危険箇所の調査・点検、治山施設の整備などの対策が必要です。"
+          },
+          {
+            id: "Q32", category: "II. 地上活動と資源・資機材管理",
+            text: "大船渡市林野火災の総被害額102億574万円のうち、過半数（57.9%）が集中した被害分野は何ですか?",
+            options: ["水産業", "住家被害", "商工観光業", "森林被害"],
+            correctAnswer: 3,
+            explanation: "森林被害が59億3,900万円で総被害額の過半数（57.9%）を占めていました。"
+          },
+          {
+            id: "Q33", category: "II. 地上活動と資源・資機材管理",
+            text: "大船渡市林野火災で確認されたように、森林被害が沿岸部の水産業に影響を及ぼす可能性として指摘されている生態系の連鎖はどれですか?",
+            options: ["焼失した樹木が直接漁船を損傷させる。", "森林焼失による土壌流出が沿岸の漁場に悪影響を及ぼす。", "森林の炭素が海水を酸性化させる。", "森林管理者が水産業復興に集中するため。"],
+            correctAnswer: 1,
+            explanation: "森林が焼失することで土壌流出が発生し、これが沿岸の漁場にも悪影響を及ぼすという生態系の連鎖が指摘されています。"
+          },
+          {
+            id: "Q34", category: "II. 地上活動と資源・資機材管理",
+            text: "大規模林野火災後の迅速な復旧・復興のため、日頃から整理し、情報共有しておくことが重要とされる情報はどれですか?",
+            options: ["被災住民の収入情報", "森林所有者や境界の情報", "消防団員の訓練履歴", "気象庁の過去の予報精度"],
+            correctAnswer: 1,
+            explanation: "被害を受けた森林の迅速な復旧のためには、日頃から森林所有者や境界の情報を整理し、広域的な連携体制の構築が有用です。"
+          },
+          {
+            id: "Q35", category: "II. 地上活動と資源・資機材管理",
+            text: "大船渡市が編成した初期復旧戦略（令和7年度一般会計補正予算）において、財源構成が大きく依存していたのはどの資金源ですか?",
+            options: ["ふるさと納税基金", "県支出金", "市の一般財源", "国際援助資金"],
+            correctAnswer: 1,
+            explanation: "広域災害として岩手県全体で対応する必要性が認識され、財源構成において県支出金に大きく依存しています。"
+          },
+          {
+            id: "Q36", category: "II. 地上活動と資源・資機材管理",
+            text: "林野火災の対応において、空中消火活動を行う消防防災ヘリが主に担当すべきとされた活動区域の特徴はどれですか?",
+            options: ["自衛隊ヘリが担当する火勢の強い林野内。", "小回りが効く特徴を活かし、主に住宅に近い地域。", "陸上部隊の活動拠点（ヘリベース）。", "延焼阻止線より外側の地域。"],
+            correctAnswer: 1,
+            explanation: "自衛隊ヘリ（大型）と連携し、小回りが効く等の特徴がある消防防災ヘリは主に住宅に近い地域を担当するなど役割分担を行いました。"
+          },
+          {
+            id: "Q37", category: "II. 地上活動と資源・資機材管理",
+            text: "長期間にわたる大規模林野火災に対応するため、地元消防本部が初動時から考慮し、時機を逸することなく行う必要があるのは何ですか?",
+            options: ["隊員の疲労を無視し、継続的な活動を命じること。", "他県への応援要請を強く躊躇すること。", "交代要員を考慮した上で必要な消防力を判断し、都道府県内応援部隊や緊急消防援助隊の出動を要請すること。", "災害対策本部を設置せず、現場指揮者に全てを委任すること。"],
+            correctAnswer: 2,
+            explanation: "初動時から交代要員を考慮した上で必要な消防力を判断し、時機を逸することなく応援部隊の出動を要請する体制確保が必要です。"
+          },
+          {
+            id: "Q38", category: "II. 地上活動と資源・資機材管理",
+            text: "大規模林野火災が発生し、緊急消防援助隊（緊援隊）の出動要請を行う前に、各消防本部で明確化し、訓練を定期的に行うべきとされる計画は何ですか?",
+            options: ["物品調達計画", "予防啓発計画", "林野火災に係る応援要請基準を定めた受援計画", "林野火災対応ユニット車の整備計画"],
+            correctAnswer: 2,
+            explanation: "林野火災に係る応援要請基準を各消防本部の受援計画で明確化し、発災時に円滑に受援体制を整えられるよう訓練を行う必要があります。"
+          },
+          {
+            id: "Q39", category: "II. 地上活動と資源・資機材管理",
+            text: "林野火災発生時の対応策として、市町村長が災害警戒本部、又は災害対策本部を迅速に設置することが重要とされる主な理由は何ですか?",
+            options: ["住民への避難を強制するため。", "火災原因者の特定を迅速に行うため。", "指揮体制の確立と、航空機（自衛隊機を含む）を要請すること。", "森林所有者の情報整理を行うため。"],
+            correctAnswer: 2,
+            explanation: "地上からの進入が困難で水利が限定されるため、時期を逸せず航空機を要請することや指揮体制の確立のため、迅速な本部設置が重要です。"
+          },
+          {
+            id: "Q40", category: "II. 地上活動と資源・資機材管理",
+            text: "林野火災の対応において、長期間の消火活動を効果的かつ継続的に実施するために、緊急消防援助隊の後方支援体制の強化で重要な要素はどれですか?",
+            options: ["隊員の活動中の休憩を一切禁止すること。", "派遣中の隊員の管轄消防本部の消防力維持を無視すること。", "隊員のシフト交代制度、食糧その他の物資の確保の促進。", "ドローンによる熱源探査のみに特化すること。"],
+            correctAnswer: 2,
+            explanation: "緊急消防援助隊の活動は長期に及ぶため、隊員のシフト交代制度や食糧・物資の確保の促進などが後方支援体制の強化として重要です。"
+          },
+          // III. 情報、指揮、連携及び安全管理
+          {
+            id: "Q41", category: "III. 情報、指揮、連携及び安全管理",
+            text: "林野火災において、陸上部隊と航空部隊との間で活動方針、活動場所、活動時間等を効果的に共有するために、大船渡市林野火災で活用されたツールは何ですか?",
+            options: ["緊急速報メール", "消防指令システム", "グリッド図", "地図に落とし込まれた延焼シミュレーション結果"],
+            correctAnswer: 2,
+            explanation: "グリッド図を活用することにより陸上部隊・航空部隊間で活動方針、活動場所、活動時間等を効果的に共有できました。"
+          },
+          {
+            id: "Q42", category: "III. 情報、指揮、連携及び安全管理",
+            text: "林野火災時、陸上部隊と航空部隊との間で確実な情報伝達を行うために、整備が必要とされている通信体制はどれですか?",
+            options: ["有線電話のみに限定すること。", "衛星通信機器も活用して、全ての場所で情報伝達が可能な体制を確立すること。", "消防防災ヘリの飛行中は全ての無線通信を停止すること。", "市町村防災行政無線（同報系）のみを利用すること。"],
+            correctAnswer: 1,
+            explanation: "連携が特に重要であり、衛星通信機器も活用して、全ての場所で情報伝達が可能な体制を確立する必要があるとされています。"
+          },
+          {
+            id: "Q43", category: "III. 情報、指揮、連携及び安全管理",
+            text: "刻々と変化する火災の全容把握が難しく、特に飛び火や風向きの変化による急な延焼拡大への対応に苦慮したという教訓を踏まえ、情報把握の強化のために推進すべきはどれですか?",
+            options: ["現場最高指揮者の直感に頼ること。", "定期的な気象予報の確認のみ。", "延焼シミュレーション技術の研究開発や、高性能ドローン・画像解析技術の活用。", "陸上部隊を固定して監視を続けること。"],
+            correctAnswer: 2,
+            explanation: "延焼拡大リスクを評価できるシミュレーション技術の研究開発や、高性能ドローン、画像解析技術の活用が必要とされています。"
+          },
+          {
+            id: "Q44", category: "III. 情報、指揮、連携及び安全管理",
+            text: "夜間の林野火災において、延焼抑止や残火処理が困難となる最大の技術的な理由は何ですか?",
+            options: ["地上部隊が疲労で活動を停止するため。", "安全確保の観点から、夜間はヘリコプターによる空中消火活動が実施されないため。", "夜間にドローンの飛行が法律で禁止されているため。", "グリッド図が夜間には利用できないため。"],
+            correctAnswer: 1,
+            explanation: "夜間の監視が課題となった背景には、山岳地飛行は視認が難しい等の理由から、夜間の空中消火は安全上の観点から実施されないという制約があります。"
+          },
+          {
+            id: "Q45", category: "III. 情報、指揮、連携及び安全管理",
+            text: "現場の火勢、風向き、風速、飛び火距離等を踏まえ、飛び火による延焼のおそれがあるエリア・建物等を判断し、機動的に放水できる部隊を配備すべきなのは、誰の役割として示されていますか?",
+            options: ["消防団長", "市町村長", "現場最高指揮者", "気象庁職員"],
+            correctAnswer: 2,
+            explanation: "火点からの距離に応じ、効果的な予防散水を実施するため、現場最高指揮者が判断し、機動的に放水できる部隊を配備しておくことが重要です。"
+          },
+          {
+            id: "Q46", category: "III. 情報、指揮、連携及び安全管理",
+            text: "林野火災における安全管理体制の強化において、隊員の疲労管理を適切に行うために組織的に実施する必要があることは何ですか?",
+            options: ["休憩なしの活動を推奨すること。", "航空部隊にのみ活動を任せること。", "早期に長期ローテーションを確立し、隊員の活動時間を組織的に管理すること。", "大規模火災への応援要請を避けること。"],
+            correctAnswer: 2,
+            explanation: "林野火災は昼夜を通じて消火活動に従事する必要があり、早期に長期ローテーションを確立し、隊員の活動時間を組織的に管理する必要があります。"
+          },
+          {
+            id: "Q47", category: "III. 情報、指揮、連携及び安全管理",
+            text: "林野火災対応において有効な技術として、火災現場付近を走行する一般車両の映像データ（ドライブレコーダー）を消防本部が検索して確認する技術が導入された、または実証実験が行われた消防本部がある都市はどれですか?",
+            options: ["東京消防庁", "大洗町消防本部", "堺市消防局、京都市消防局", "大船渡市消防団"],
+            correctAnswer: 2,
+            explanation: "堺市消防局では導入済み、京都市消防局では実証実験中に林野火災の規模を早期確認できた奏功事例があります。"
+          },
+          {
+            id: "Q48", category: "III. 情報、指揮、連携及び安全管理",
+            text: "林野火災時の状況把握を迅速化するため、緊急消防援助隊に新設された部隊で、情報把握、情報伝達、指揮支援を担うものは何ですか?",
+            options: ["毒劇物等対応小隊", "土砂・風水害機動支援部隊", "情報統括支援隊（指揮支援部隊の一部）", "後方支援小隊"],
+            correctAnswer: 2,
+            explanation: "情報統括支援隊を含む指揮支援部隊が中心となり、ウェブやデジタル資機材を活用して、現場部隊と情報共有を行い、効果的な活動につなげることが重要です。"
+          },
+          {
+            id: "Q49", category: "III. 情報、指揮、連携及び安全管理",
+            text: "過去の消防研究所の実験から、火の粉による着火を防ぐ効果が期待できると認められている対策は何ですか?",
+            options: ["延焼阻止線を建物から遠ざけること。", "あらかじめ可燃物に水をまいておく（予防散水）こと。", "林野火災発生後、直ちに避難すること。", "強風注意報が発令されるまで待機すること。"],
+            correctAnswer: 1,
+            explanation: "予防散水を行うことが、火の粉による着火を防ぐ効果が期待できるとされています。"
+          },
+          {
+            id: "Q50", category: "III. 情報、指揮、連携及び安全管理",
+            text: "夜間の継続的な警戒活動が課題となったことを踏まえ、夜間の監視に対応できる高性能な情報収集手段として整備が推奨されているものは何ですか?",
+            options: ["地上設置型の赤外線カメラ", "夜間監視・熱源探査ドローン", "消防団による夜間の巡回のみ", "衛星赤外データによる火災検出（研究開発中）"],
+            correctAnswer: 1,
+            explanation: "的確な情報把握のため、夜間の監視に対応できるドローン等を整備することが今後の対策として掲げられています。"
+          },
+          {
+            id: "Q51", category: "III. 情報、指揮、連携及び安全管理",
+            text: "大船渡市林野火災の教訓から、飛び火による火災発生を警戒・防御するための住民の自主的な取組として推奨されている行動はどれですか?",
+            options: ["避難指示が発令されるまで自宅で待機する。", "強風下でもたき火を続けること。", "飛び火により着火しやすい箇所（軒裏、植栽等）への啓発や、自主防災組織と協力した予防散水を行うこと。", "消防団員の活動を個別に監視すること。"],
+            correctAnswer: 2,
+            explanation: "地域住民が自主防災組織等と協力して事前に自ら建物等への予防散水を行うなどの自主的な取組や、着火しやすい箇所への啓発が重要です。"
+          },
+          {
+            id: "Q52", category: "III. 情報、指揮、連携及び安全管理",
+            text: "消防防災ヘリコプターの運用において、安全を確保しつつ消火効率を高めるために重要なことは何ですか?",
+            options: ["可能な限り地上部隊との連携を避けること。", "燃料費を抑えるために散水回数を減らすこと。", "活動空域に見合う十分な機数を確保し、連続的な散水に努めること。", "自衛隊ヘリのみに全ての消火活動を任せること。"],
+            correctAnswer: 2,
+            explanation: "航空機による空中消火は効果的であることから、安全に十分留意した上で活動空域に見合う十分な機数を確保し、連続的な散水に努めることが重要です。"
+          },
+          {
+            id: "Q53", category: "III. 情報、指揮、連携及び安全管理",
+            text: "延焼シミュレーション技術の研究開発において、林野火災の発生・拡大リスク評価システムに加え、統合が目指されている別の種類のシミュレーションは何ですか?",
+            options: ["地震被害想定シミュレーション", "津波浸水シミュレーション", "市街地火災延焼シミュレーション", "化学物質拡散シミュレーション"],
+            correctAnswer: 2,
+            explanation: "市街地火災延焼シミュレーションと林野火災延焼シミュレーションを統合した消防活動支援システムの研究開発が推進されています。"
+          },
+          {
+            id: "Q54", category: "III. 情報、指揮、連携及び安全管理",
+            text: "林野火災における情報把握・伝達手段の活用として、ドローンや高所監視カメラの映像を伝送・共有するシステムに組み込むことが検討されている技術は何ですか?",
+            options: ["人工衛星による遠隔操作技術", "水利確保のためのGPS技術", "画像解析 AI", "自動消火ロボット"],
+            correctAnswer: 2,
+            explanation: "ドローンや高所監視カメラの映像伝送・共有システムや、カメラに画像解析AIを組み込む等、デジタル技術による情報把握・伝達手段の活用を検討する必要があります。"
+          },
+          {
+            id: "Q55", category: "III. 情報、指揮、連携及び安全管理",
+            text: "災害マネジメント総括支援員等の育成を目的とした研修が実施されている主な目的は何ですか?",
+            options: ["災害現場で戦闘指揮を執るため。", "被災市町村の職員だけでは的確な災害対応を行うことが困難な場合に、災害マネジメント及び災害対応業務の支援を行うため。", "消防職員のハラスメント対策を推進するため。", "消防団員の入団促進を図るため。"],
+            correctAnswer: 1,
+            explanation: "被災市町村の職員だけでは的確な災害対応を行うことが困難な場合を想定し、災害マネジメント及び災害対応業務の支援を目的としています。"
+          },
+          {
+            id: "Q56", category: "III. 情報、指揮、連携及び安全管理",
+            text: "林野火災が発生した場合、市町村が速やかに避難指示等の発令の判断を下すために収集すべき情報として、気象庁や消防機関等から収集するものとして挙げられているのは何ですか?",
+            options: ["森林所有者の情報", "防災気象情報や画像・映像情報等", "過去の災害復旧予算の詳細", "土砂災害防止のための治山施設の整備状況"],
+            correctAnswer: 1,
+            explanation: "林野火災は急激な延焼拡大に至る場合があることから、防災気象情報や画像・映像情報等を収集し、速やかに避難指示等の発令の判断を下す必要があります。"
+          },
+          {
+            id: "Q57", category: "III. 情報、指揮、連携及び安全管理",
+            text: "大船渡市林野火災の教訓から、避難情報等の周知において、近隣扶助の意識の低下が見られるため、個々の住民に確実に情報が伝達できるよう推進すべきはどれですか?",
+            options: ["避難指示の発令を省略すること。", "災害情報伝達手段の多重化・多様化を推進すること。", "防災行政無線（屋外スピーカー）のみに頼ること。", "延焼シミュレーションの公開を中止すること。"],
+            correctAnswer: 1,
+            explanation: "近隣扶助の意識の低下がみられるため、個々の住民に伝達できるよう、防災行政無線、防災アプリ等を用いた災害情報伝達手段の多重化・多様化を推進する必要があります。"
+          },
+          {
+            id: "Q58", category: "III. 情報、指揮、連携及び安全管理",
+            text: "強風下で防災行政無線の屋外スピーカーが聞き取りにくい場合があるという課題に対応するため、特に要配慮者のいる世帯やリスクの高い地域に居住する世帯について設置を推進すべきとされた機器は何ですか?",
+            options: ["スマートフォンアプリ", "ドライブレコーダー", "戸別受信機", "熱画像直視装置"],
+            correctAnswer: 2,
+            explanation: "強風下においては屋外スピーカーが聞き取りにくい場合があるため、特に要配慮者のいる世帯やリスクの高い地域に居住する世帯について、戸別受信機の設置を推進することが求められています。"
+          },
+          {
+            id: "Q59", category: "III. 情報、指揮、連携及び安全管理",
+            text: "林野火災において、市町村が避難指示の発令の基準や考え方を事前に整理・検討しておくことが重要とされる主な理由はどれですか?",
+            options: ["消防法に基づく警報を的確に発令するため。", "林野火災は急激な延焼拡大に至る場合があるため。", "森林所有者との情報共有をスムーズに行うため。", "消防団員の処遇改善を決定するため。"],
+            correctAnswer: 1,
+            explanation: "林野火災は急激な延焼拡大に至る場合があることから、地域の実情を踏まえ、避難指示の発令等に関する基準や考え方を事前に整理・検討しておくことが重要です。"
+          },
+          {
+            id: "Q60", category: "III. 情報、指揮、連携及び安全管理",
+            text: "大規模災害時の住民避難行動の促進を図る上で有効と考えられる、行政による避難の呼び掛けに加えて重要な要素は何ですか?",
+            options: ["警察による強制的な避難誘導", "住民同士の声掛け", "消防職員の専門知識の向上", "火災警報の発令のみ"],
+            correctAnswer: 1,
+            explanation: "行政による避難の呼び掛けに加え、住民同士の声掛けが地域住民の避難行動の促進を図る上で有効であると考えられています。"
+          },
+          // IV. 消防団の体制強化と教育
+          {
+            id: "Q61", category: "IV. 消防団の体制強化と教育",
+            text: "大船渡市林野火災の際に確認された消防団の情報伝達上の課題として、特に指摘されたのは何ですか?",
+            options: ["通信機器の数が多すぎたこと。", "消防団員の通信技能が不足していたこと。", "配備されている通信機器が不足していたことや、一部の地域が不感地帯であったため。", "ドローンによる情報伝達が普及していたこと。"],
+            correctAnswer: 2,
+            explanation: "配備されている通信機器の不足や、一部の地域が不感地帯であったために無線機や携帯電話が使用できず、情報伝達に支障があった事例が確認されています。"
+          },
+          {
+            id: "Q62", category: "IV. 消防団の体制強化と教育",
+            text: "電波が届かない不感地帯での連絡手段を確保するため、消防団の体制強化として活用すべき手段は何ですか?",
+            options: ["有線電話の敷設", "伝令による情報伝達", "衛星通信機器", "地上設置型カメラ"],
+            correctAnswer: 2,
+            explanation: "不感地帯をあらかじめ把握し、当該地域でも連絡手段を確保する観点から、衛星通信機器も活用した情報伝達手段の充実を図る必要があります。"
+          },
+          {
+            id: "Q63", category: "IV. 消防団の体制強化と教育",
+            text: "広範囲にわたった林野火災の延焼状況等を確認する手段として、消防団員の安全確保と迅速な情報収集に資するため、導入促進と操縦技能向上が推奨されている装備は何ですか?",
+            options: ["消防防災ヘリコプター", "救助工作車", "ドローン", "大型水槽付き放水車"],
+            correctAnswer: 2,
+            explanation: "ドローンの活用を更に促進するとともに、消防団員のドローンの操縦技能の向上を図ることが必要とされています。"
+          },
+          {
+            id: "Q64", category: "IV. 消防団の体制強化と教育",
+            text: "大規模火災に対応するための消防団員確保に向けた対策として、団員確保のメリットとしてアピールすべき具体例は何ですか?",
+            options: ["消防活動の危険性が低いこと", "活動時間が少ないこと", "ドローン等の技術習得や免許取得", "消防団員の活動が全てボランティアであること"],
+            correctAnswer: 2,
+            explanation: "ドローン等の技術習得や免許取得といったメリットのアピールのほか、女性や若者をターゲットに置いた広報を積極的に進める必要があります。"
+          },
+          {
+            id: "Q65", category: "IV. 消防団の体制強化と教育",
+            text: "消防団員が円滑かつ適切な活動を行うために、訓練内容として充実を図るべきことは何ですか?",
+            options: ["事務作業の効率化のみ", "他の災害（地震、津波）対策訓練のみ", "実際の活動における消防団員一人一人の役割を確認し、車両や資機材の取扱いについても十分習熟できる訓練", "高層建物での救助訓練"],
+            correctAnswer: 2,
+            explanation: "実際の活動における消防団員一人一人の役割を確認するとともに、車両や資機材の取扱いについても十分習熟できるような訓練内容の充実を図る必要があります。"
+          },
+          {
+            id: "Q66", category: "IV. 消防団の体制強化と教育",
+            text: "消防団の活動を通じて、地域住民の防火意識向上につながる活動を積極的に実施すべき連携先は何ですか?",
+            options: ["林野庁や気象庁", "自主防災組織等", "建設業者", "災害ボランティアセンター"],
+            correctAnswer: 1,
+            explanation: "地域防災を担う自主防災組織等との連携を一層強化するとともに、平時から、地域住民の火災予防の意識向上につながる活動を積極的に実施することが必要です。"
+          },
+          {
+            id: "Q67", category: "IV. 消防団の体制強化と教育",
+            text: "消防団が自主防災組織等と連携して行う、地域住民の防火・防災に関する知識等を共有するためのコミュニケーション機会の創出の例として挙げられているものは何ですか?",
+            options: ["SNSを通じた一方的な情報発信", "地域住民向けの防災に関する座談会を実施", "消防団員向けの専門技術研修", "遠距離送水訓練の公開"],
+            correctAnswer: 1,
+            explanation: "地域住民向けの防災に関する座談会を実施するなど、地域住民と顔の見える関係の構築や防火・防災に関する知識等を共有できるコミュニケーション機会の創出に取り組むことが推奨されています。"
+          },
+          {
+            id: "Q68", category: "IV. 消防団の体制強化と教育",
+            text: "大規模火災等に対応するため、消防団員の確保対策として、女性や若者をターゲットに置いた広報のほかに積極的に進めるべき取組は何ですか?",
+            options: ["消防団員への特別手当の支給停止", "消防団員の処遇の改善、企業や大学等と連携した入団促進", "経験豊富な団員のみに活動を限定すること", "ドローン操縦を女性に限定すること"],
+            correctAnswer: 1,
+            explanation: "女性や若者をターゲットにした広報のほか、消防団員の処遇の改善、企業や大学等と連携した入団促進などの取組を積極的に進める必要があります。"
+          },
+          {
+            id: "Q69", category: "IV. 消防団の体制強化と教育",
+            text: "林野火災対応に必要な消防団の資機材について、定期的な点検整備等の適切な維持管理とともに行うべきことは何ですか?",
+            options: ["全て新技術に置き換える。", "計画的な更新を行うこと。", "使用頻度の高いものだけを点検すること。", "消防団員の安全を無視してでも活動を続けること。"],
+            correctAnswer: 1,
+            explanation: "可搬消防ポンプ等の資機材や車両について、定期的な点検整備等の適切な維持管理の徹底や計画的な更新を行うことが重要です。"
+          },
+          {
+            id: "Q70", category: "IV. 消防団の体制強化と教育",
+            text: "消防団の団員確保に向けた広報活動において、ターゲットとすべき属性として特に挙げられているのはどれですか?",
+            options: ["高齢者のみ", "企業経営者", "女性や若者", "林業従事者"],
+            correctAnswer: 2,
+            explanation: "団員確保に向け、女性や若者をターゲットに置いた広報を積極的に進める必要があります。"
+          },
+          {
+            id: "Q71", category: "IV. 消防団の体制強化と教育",
+            text: "大規模林野火災における消防団の活動において、現地を熟知しているという強みを活かした対応の例は何ですか?",
+            options: ["延焼シミュレーションの作成", "無限水利の活用や中継送水への迅速な対応", "消防職員の訓練指導", "遠隔操作ロボットの運用"],
+            correctAnswer: 1,
+            explanation: "地元を熟知し、過去の火災を教訓に平時に実施している訓練が、無限水利の活用や中継送水への迅速な対応、早期の退避判断による安全確保といった対応に活かされました。"
+          },
+          {
+            id: "Q72", category: "IV. 消防団の体制強化と教育",
+            text: "消防団の体制強化において、災害対応高度化推進事業により推進されるべきことは何ですか?",
+            options: ["消防団の活動停止", "災害情報の外部への秘匿", "消防団への救助用資機材等を搭載した多機能消防車無償貸付", "林野火災対応ユニット車の全廃"],
+            correctAnswer: 2,
+            explanation: "「消防団災害対応高度化推進事業」とともに、「消防団への救助用資機材等を搭載した多機能消防車無償貸付」が含まれています。"
+          },
+          {
+            id: "Q73", category: "IV. 消防団の体制強化と教育",
+            text: "大規模火災における消防団の活動で、長期間にわたる活動となった結果、確認された課題はどれですか?",
+            options: ["経験豊富な団員が多すぎたこと。", "経験が少ない等の理由から対応できる消防団員に限りがあったこと。", "通信体制が完璧であったこと。", "火点が広範囲にわたっていなかったこと。"],
+            correctAnswer: 1,
+            explanation: "長期間の活動となったことにより交代で対応する必要があったが、経験が少ない等の理由から対応できる消防団員に限りがあったことが確認されています。"
+          },
+          {
+            id: "Q74", category: "IV. 消防団の体制強化と教育",
+            text: "消防団の装備充実のために、林野火災に有効な資機材として具体的に整備を図ることが求められているものは何ですか?",
+            options: ["ドローン操縦士の制服", "無人偵察機", "背負い式消火水のう、消火水のう用給水器", "救助工作車"],
+            correctAnswer: 2,
+            explanation: "背負い式消火水のう、消火水のう用給水器などの林野火災に有効な資機材の整備など、消防団の装備の充実を図ることが求められています。"
+          },
+          {
+            id: "Q75", category: "IV. 消防団の体制強化と教育",
+            text: "林野火災発生時、市町村の避難情報の発令対象区域外であっても、延焼拡大のおそれを考慮して検討すべきとされた行動は何ですか?",
+            options: ["災害対策本部を閉鎖する。", "延焼シミュレーションの活用を中止する。", "火災発生を知らせる情報、避難の準備を促す情報、高齢者等避難の発令を検討すべき。", "住民を消防団員として強制的に招集する。"],
+            correctAnswer: 2,
+            explanation: "延焼拡大のおそれを考慮し、火災発生を知らせる情報、避難の準備を促す情報、高齢者等避難の発令を検討すべきです。"
+          },
+          {
+            id: "Q76", category: "IV. 消防団の体制強化と教育",
+            text: "消防機関等による林野火災対応力の向上を図るため、消防庁を中心として今後確実に進められるべき取組みとして挙げられているのは何ですか?",
+            options: ["森林伐採の全面禁止", "消防団員の常勤化", "消火薬剤の効果的な活用の検討や新技術・新装備の研究開発", "全国一律での林野火災警報の発令"],
+            correctAnswer: 2,
+            explanation: "消火薬剤の効果的な活用の検討や新技術・新装備の研究開発が確実に進められることで、林野火災対応力の向上が図られることが期待されています。"
+          },
+          {
+            id: "Q77", category: "IV. 消防団の体制強化と教育",
+            text: "災害情報伝達手段の多重化・多様化を推進する理由として、最も直接的なものはどれですか?",
+            options: ["消防職員の負担を軽減するため。", "地域住民の近隣扶助の意識が高まったため。", "近隣扶助の意識の低下がみられ、個々の住民に確実に情報が伝達できるようにするため。", "緊急速報メールの配信が容易になったため。"],
+            correctAnswer: 2,
+            explanation: "近隣扶助の意識の低下がみられるため、個々の住民に伝達できるよう、災害情報伝達手段の多重化・多様化を推進する必要があります。"
+          },
+          {
+            id: "Q78", category: "IV. 消防団の体制強化と教育",
+            text: "大船渡市林野火災の初発事案（綾里田浜下地内）において、消火活動の困難性を受けて岩手県に対し要請が行われた外部組織はどこですか?",
+            options: ["警察庁の特殊部隊", "自衛隊災害派遣", "アメリカ合衆国森林保護防火局", "国際消防救助隊"],
+            correctAnswer: 1,
+            explanation: "消火活動の困難性を受けて岩手県に対し自衛隊災害派遣要請が行われました。"
+          },
+          {
+            id: "Q79", category: "IV. 消防団の体制強化と教育",
+            text: "林野火災時の住民避難対応において、将来的に市町村が具体の避難先を決定する際に活用することが望ましいとされている技術は何ですか?",
+            options: ["熱画像直視装置による熱源探査", "ドライブレコーダー映像の解析", "延焼シミュレーション", "AIによる炎の常時監視技術"],
+            correctAnswer: 2,
+            explanation: "将来的には延焼シミュレーションを活用し延焼範囲等をある程度予想したうえで、具体の避難先を決定することが望ましいとされています。"
+          },
+          {
+            id: "Q80", category: "IV. 消防団の体制強化と教育",
+            text: "林野火災発生危険度予測システムで、延焼危険日を判定する際に考慮される主要な要因として、林床可燃物含水比のほかに挙げられているのは何ですか?",
+            options: ["樹冠密度と土壌の種類", "風向・風速と地形の傾斜角度", "人口密度と火災発生頻度", "過去の被害総額"],
+            correctAnswer: 1,
+            explanation: "延焼危険日を予測する際、風向・風速と地形の傾斜角度などの要因を考慮し、延焼速度が400m/h以上となる条件を延焼危険日として判定します。"
+          },
+          // V. 応用技術と広域連携、その他の課題
+          {
+            id: "Q81", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災における消火活動支援システムとして、令和8年度中を目途に研究開発が目指されている技術の統合内容はどれですか?",
+            options: ["GPS情報とドローンの飛行軌跡の統合", "市街地火災延焼シミュレーションと林野火災延焼シミュレーションの統合", "消防団員の活動記録と訓練履歴の統合", "救急隊の出動記録と病院収容所要時間の統合"],
+            correctAnswer: 1,
+            explanation: "市街地火災延焼シミュレーションと林野火災延焼シミュレーションを統合した消防活動支援システムの研究開発を推進することが必要とされています。"
+          },
+          {
+            id: "Q82", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災対応における消防活動の強化のため、車両が進入できない林野内にも送水や放水が可能となるよう、その充実強化が重要とされる資機材は何ですか?",
+            options: ["消火薬剤（延焼防止剤）", "大型仮設水槽", "拠点機能形成車", "救助工作車"],
+            correctAnswer: 1,
+            explanation: "車両が進入できない林野内にも送水や放水が可能となるよう、大型仮設水槽をはじめとした資機材等の充実強化が重要とされています。"
+          },
+          {
+            id: "Q83", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災対応車両として整備が進められている「林野火災対応ユニット車」の主な特徴は何ですか?",
+            options: ["大量の消火薬剤を搭載できること。", "山林内でも走破性が高く、簡易水槽やポンプ、資機材を搭載できること。", "大型のヘリコプターへの燃料補給機能があること。", "高所での救助活動に特化していること。"],
+            correctAnswer: 1,
+            explanation: "山林内でも走破性が高く、簡易水槽やポンプ、背負い式消火水のうなどの資機材を搭載した車両として整備が進められています。"
+          },
+          {
+            id: "Q84", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災発生危険度予測システムで用いられる、樹冠密度を算出するために活用されるデータはどれですか?",
+            options: ["気象庁MSMガイダンスの解析データ", "環境省生物多様性センターの植生調査成果", "ESAが運用する光学衛星Sentinel-2に搭載されているMSI（Multi Spectral Imager）のセンサーデータ", "人口密度データ"],
+            correctAnswer: 2,
+            explanation: "ESAが運用している光学衛星Sentinel-2に搭載されているMSI（Multi Spectral Imager）のセンサーデータを利用して樹冠密度を算出します。"
+          },
+          {
+            id: "Q85", category: "V. 応用技術と広域連携、その他の課題",
+            text: "アメリカ合衆国で林野火災対策組織が取り組んでいる、住宅地と林野が隣接する地域での火災（WUI火災）への対策として行われていることは何ですか?",
+            options: ["建物から一定距離内の植生を完全に除去する「ゾーニング」（Zone 0～2）を行い、延焼防止対策を求めること。", "林野火災警報が発令された場合、住民の避難を強制すること。", "延焼防止剤の基準設定を国が一切行わないこと。", "ドローンによる消火活動のみに依存すること。"],
+            correctAnswer: 0,
+            explanation: "アメリカではWUI火災と定義され、建物からの距離に応じてゾーニングし、建物への延焼防止対策が求められています。"
+          },
+          {
+            id: "Q86", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災において、延焼拡大阻止のため長期ローテーションを組んでの消火活動が求められますが、夜間に延焼拡大を阻止するため特に重要となる隊員の管理は何ですか?",
+            options: ["救助技術の向上", "資機材の点検", "疲労管理", "通信機の操作訓練"],
+            correctAnswer: 2,
+            explanation: "林野火災は昼夜を通じて消火活動に従事する必要があることから、隊員の疲労管理が重要となり、活動時間を組織的に管理する必要があります。"
+          },
+          {
+            id: "Q87", category: "V. 応用技術と広域連携、その他の課題",
+            text: "大規模林野火災後の森林再生において、土砂災害リスクが高まる原因として最も適切なものはどれですか?",
+            options: ["森林の植生が急速に回復しすぎるため。", "樹木の焼失により、山の吸水・保水能力が低下し、土砂が流出しやすくなるため。", "消防団員が山林内で重機を使用するため。", "延焼防止剤の影響で地盤が固くなるため。"],
+            correctAnswer: 1,
+            explanation: "焼け跡は、樹木の焼失により山の吸水・保水能力は低下し、土砂が流出しやすくなり、二次災害のリスクが高まります。"
+          },
+          {
+            id: "Q88", category: "V. 応用技術と広域連携、その他の課題",
+            text: "消防防災体制の強化のため、消防庁予算で措置されている主な事業の一つで、AIの活用を含めたDXに関する研究開発を推進するものは何ですか?",
+            options: ["消防団災害対応高度化推進事業", "緊急消防援助隊設備整備費補助金", "競争的研究費の拡充", "弾道ミサイルを想定した住民避難訓練優良事例集作成"],
+            correctAnswer: 2,
+            explanation: "AIの活用を含めたDXに関する研究開発をはじめ、消防防災行政に係る課題解決等のため、競争的研究費の拡充が挙げられています。"
+          },
+          {
+            id: "Q89", category: "V. 応用技術と広域連携、その他の課題",
+            text: "延焼阻止に重点を置いた間接消火や、残火処理に消火薬剤（泡・浸潤剤）の活用を検討する目的は何ですか?",
+            options: ["消火活動の安全管理を簡素化するため。", "消火効果を高めるため。", "延焼シミュレーションの精度を上げるため。", "住民の避難を速やかに行わせるため。"],
+            correctAnswer: 1,
+            explanation: "間接消火や残火処理も含め、消火効果を高めるための消火薬剤の活用を検討していく必要があるとされています。"
+          },
+          {
+            id: "Q90", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災の発生危険度予測システムで、林床可燃物含水比の判定における危険度の閾値（しきい値）として用いられている値はいくつですか?",
+            options: ["1.8 g/g", "1.0 g/g", "0.2 g/g", "2.5 g/g"],
+            correctAnswer: 2,
+            explanation: "危険度判定の閾値は0.2 g/g（含水比20%以下）が用いられています。"
+          },
+          {
+            id: "Q91", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災予防の実効性を高めるために、たき火の届出制度や防火指導の強化のほかに推進が必要とされているのは何ですか?",
+            options: ["火災警報発令時の全面的な火の使用禁止", "地方自治体によるヘリコプターの増強", "森林の防火機能の向上のための植栽や消火活動に資する林道整備", "消防団員の処遇改善の停止"],
+            correctAnswer: 2,
+            explanation: "森林の防火機能の向上のための植栽や消火活動に資する林道整備などを通じた林野火災に強い地域づくりを推進する必要があります。"
+          },
+          {
+            id: "Q92", category: "V. 応用技術と広域連携、その他の課題",
+            text: "大規模林野火災発生時、市街地への延焼を阻止するために陸上からの消火活動で主に行われた戦術は何ですか?",
+            options: ["住宅への直接放水のみ", "林野内の火点への突入", "山林と市街地との間に延焼阻止線を設定して山林からの延焼を防御する活動", "自衛隊への無制限の空中消火要請"],
+            correctAnswer: 2,
+            explanation: "山林と市街地との間に延焼阻止線を設定して山林からの延焼を防御するとともに、安全を確保しつつ林野内の消火活動を実施しました。"
+          },
+          {
+            id: "Q93", category: "V. 応用技術と広域連携、その他の課題",
+            text: "災害時に円滑な応援要請を行うため、各消防本部の受援計画で明確化しておくべきとされる内容はどれですか?",
+            options: ["消防長の活動時間", "自主防災組織の訓練内容", "林野火災に係る応援要請基準", "隊員の処遇改善計画"],
+            correctAnswer: 2,
+            explanation: "林野火災に係る応援要請基準を各消防本部の受援計画で明確化し、迅速な応援要請につながるよう担保する必要があります。"
+          },
+          {
+            id: "Q94", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災対応において、夜間の延焼拡大を阻止するため昼夜を通じて活動に従事する必要があることから、隊員の活動時間を組織的に管理する必要があることが求められるのは、安全管理上のどの側面に起因しますか?",
+            options: ["遭難対策", "疲労管理", "落石対策", "野生動物対策"],
+            correctAnswer: 1,
+            explanation: "林野火災は昼夜を通じて消火活動に従事する必要があることから、隊員の疲労管理が重要となり、活動時間を組織的に管理する必要があります。"
+          },
+          {
+            id: "Q95", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災時、特に要配慮者がいる世帯等への災害情報伝達手段として、戸別受信機の設置が推奨される理由は何ですか?",
+            options: ["戸別受信機が安価で導入しやすいため。", "緊急速報メールよりも画像情報が豊富であるため。", "強風下において防災行政無線の屋外スピーカーが聞き取りにくい場合があるため。", "避難指示の発令を自動的に行う機能があるため。"],
+            correctAnswer: 2,
+            explanation: "強風下においては、防災行政無線の屋外スピーカーが聞き取りにくい場合があることから、戸別受信機の設置推進が必要とされています。"
+          },
+          {
+            id: "Q96", category: "V. 応用技術と広域連携、その他の課題",
+            text: "「（仮称）林野火災注意報」の発令指標の基本的な考え方は、何に加え、強風の場合には「（仮称）林野火災警報」を発令することとされていますか?",
+            options: ["樹冠密度が高い場合", "人口密度が高い場合", "（仮称）林野火災注意報の発令指標の考え方", "過去に大規模火災が発生した履歴"],
+            correctAnswer: 2,
+            explanation: "（仮称）林野火災警報の発令指標の設定の基本的な考え方として、（仮称）林野火災注意報の発令指標の考え方に加えて、強風注意報が発表されている場合が示されています。"
+          },
+          {
+            id: "Q97", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災の鎮火後、被災した森林の迅速な復旧のため、森林所有者や境界の情報整理に加え、有用となる体制は何ですか?",
+            options: ["専門家による消火薬剤の研究開発", "広域的な連携体制の構築", "消防団員の夜警活動", "避難指示の発令基準の見直し"],
+            correctAnswer: 1,
+            explanation: "被災後の迅速な復旧のためには、日頃からの情報整理に加え、被災後には広域的な連携体制の構築が有用となります。"
+          },
+          {
+            id: "Q98", category: "V. 応用技術と広域連携、その他の課題",
+            text: "大船渡市林野火災の被害額において、森林被害に次いで甚大な被害（20億9,700万円）を被った産業分野は何ですか?",
+            options: ["商工観光業", "公的資産", "水産業", "インフラ施設"],
+            correctAnswer: 2,
+            explanation: "森林被害（59億3,900万円）に次いで、水産業が20億9,700万円の甚大な被害を受けました。"
+          },
+          {
+            id: "Q99", category: "V. 応用技術と広域連携、その他の課題",
+            text: "林野火災対応のため、消防機関が地方公共団体の防災拠点となる公共施設等の耐震化を推進する際に、活用可能な財政措置として挙げられているものは何ですか?",
+            options: ["補助金による賄賂", "緊急防災・減災事業債", "地方債の特別枠なし", "消防団員の自費による負担"],
+            correctAnswer: 1,
+            explanation: "地方公共団体の防災拠点となる公共施設等の耐震化について、緊急防災・減災事業債の対象となっていることが示されています。"
+          },
+          {
+            id: "Q100", category: "V. 応用技術と広域連携、その他の課題",
+            text: "大規模林野火災対応における消防活動の課題として、火災の全容把握が難しかった原因として特に挙げられているのは何ですか?",
+            options: ["消防団員の数が少なかったこと", "消防車が老朽化していたこと", "被害が広範囲に及び、飛び火や風向きの変化による急な延焼拡大があったこと", "予防散水の実施が遅れたこと"],
+            correctAnswer: 2,
+            explanation: "被害が広範囲であったため状況の早期把握が困難であり、特に飛び火や風向きの変化による急な延焼拡大などの対応に苦慮しました。"
+          }
         ];
 
-        // State
-        let flashcards = [...originalFlashcards];
-        let currentIndex = 0;
-        let isFlipped = false;
+        // --- Utility Functions ---
 
-        // Elements
-        const innerElement = document.getElementById('flashcard-inner');
-        const frontText = document.getElementById('card-front-text');
-        const backText = document.getElementById('card-back-text');
-        const counter = document.getElementById('card-counter');
+        const shuffleArray = (array) => {
+          const newArray = [...array];
+          for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+          }
+          return newArray;
+        };
 
-        // Initial Render
-        renderCard();
+        // --- Main Component ---
 
-        // Functions
-        function renderCard() {
-            // Reset flip state visually first
-            innerElement.classList.remove('is-flipped');
-            isFlipped = false;
-            
-            // Short delay to update text to avoid showing new answer while flipping back
-            // But for simple usability, immediate update is fine.
-            const card = flashcards[currentIndex];
-            frontText.textContent = card.front;
-            backText.textContent = card.back;
-            counter.textContent = `${currentIndex + 1} / ${flashcards.length}`;
-        }
+        function App() {
+          const [currentQuestions, setCurrentQuestions] = useState([]);
+          const [userAnswers, setUserAnswers] = useState({});
+          const [isGraded, setIsGraded] = useState(false);
 
-        function flipCard() {
-            isFlipped = !isFlipped;
-            if (isFlipped) {
-                innerElement.classList.add('is-flipped');
-            } else {
-                innerElement.classList.remove('is-flipped');
+          // 初回ロード時に問題をシャッフルして10問セットする
+          useEffect(() => {
+            startNewQuiz();
+          }, []);
+
+          const startNewQuiz = () => {
+            const shuffled = shuffleArray(ALL_QUESTIONS);
+            setCurrentQuestions(shuffled.slice(0, 10));
+            setUserAnswers({});
+            setIsGraded(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+
+          const handleOptionSelect = (questionId, optionIndex) => {
+            if (isGraded) return; // 採点後は変更不可
+            setUserAnswers((prev) => ({
+              ...prev,
+              [questionId]: optionIndex
+            }));
+          };
+
+          const handleGrade = () => {
+            const unansweredCount = currentQuestions.length - Object.keys(userAnswers).length;
+            if (unansweredCount > 0) {
+              if (!confirm(`まだ${unansweredCount}問未回答です。採点してもよろしいですか？`)) {
+                return;
+              }
             }
+            setIsGraded(true);
+            setTimeout(() => {
+              const resultElement = document.getElementById('result-section');
+              resultElement?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          };
+
+          // スコア計算
+          const score = useMemo(() => {
+            let count = 0;
+            currentQuestions.forEach((q) => {
+              if (userAnswers[q.id] === q.correctAnswer) {
+                count++;
+              }
+            });
+            return count;
+          }, [currentQuestions, userAnswers]);
+
+          const progress = currentQuestions.length > 0 ? (Object.keys(userAnswers).length / currentQuestions.length) * 100 : 0;
+
+          return (
+            <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-amber-500 selection:text-white pb-20">
+              {/* ヘッダー */}
+              <header className="bg-slate-950 border-b border-amber-600/30 sticky top-0 z-50 shadow-lg backdrop-blur-md bg-opacity-90">
+                <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-amber-400 to-amber-600 p-2 rounded-lg shadow-amber-500/20 shadow-lg">
+                      <BookOpen className="text-slate-900 w-6 h-6" />
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-serif tracking-wider text-amber-50 font-bold">
+                        大船渡市大規模林野火災の教訓
+                      </h1>
+                      <p className="text-xs text-amber-400/80 uppercase tracking-widest font-medium">e-Learning System</p>
+                    </div>
+                  </div>
+                  <div className="hidden md:block">
+                    <div className="text-right">
+                      <p className="text-xs text-slate-400 mb-1">進捗状況</p>
+                      <div className="w-32 h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-500 ease-out"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              <main className="max-w-3xl mx-auto px-6 py-10 space-y-8">
+                {/* イントロダクション */}
+                <div className="text-center mb-12 space-y-4">
+                  <p className="text-slate-400 text-sm font-serif italic">
+                    全100問のデータベースからランダムに10問が出題されます。
+                  </p>
+                </div>
+
+                {/* 問題リスト */}
+                <div className="space-y-12">
+                  {currentQuestions.map((q, index) => {
+                    const isCorrect = userAnswers[q.id] === q.correctAnswer;
+                    const userAnswer = userAnswers[q.id];
+                    
+                    return (
+                      <div 
+                        key={q.id} 
+                        className={`group relative bg-slate-800/50 rounded-2xl p-8 border transition-all duration-300 ${
+                          isGraded 
+                            ? isCorrect 
+                              ? "border-emerald-500/50 bg-emerald-900/10 shadow-[0_0_30px_-10px_rgba(16,185,129,0.3)]" 
+                              : "border-rose-500/50 bg-rose-900/10 shadow-[0_0_30px_-10px_rgba(244,63,94,0.3)]"
+                            : "border-slate-700 hover:border-amber-500/30 hover:shadow-2xl hover:shadow-black/50"
+                        }`}
+                      >
+                        {/* 問題番号バッジ */}
+                        <div className="absolute -top-4 -left-2">
+                          <span className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 ${
+                            isGraded
+                              ? isCorrect
+                                ? "bg-emerald-600 text-emerald-50"
+                                : "bg-rose-600 text-rose-50"
+                              : "bg-gradient-to-br from-slate-700 to-slate-900 text-amber-500 border border-slate-600"
+                          }`}>
+                            Q{index + 1}
+                            {isGraded && (
+                              isCorrect ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />
+                            )}
+                          </span>
+                        </div>
+
+                        {/* カテゴリー */}
+                        <div className="mb-4 pl-1">
+                          <span className="text-xs font-medium text-amber-500/80 tracking-widest uppercase border-b border-amber-500/20 pb-1">
+                            {q.category}
+                          </span>
+                        </div>
+
+                        {/* 問題文 */}
+                        <h3 className="text-lg md:text-xl font-serif leading-relaxed text-slate-100 mb-8">
+                          {q.text}
+                        </h3>
+
+                        {/* 選択肢 */}
+                        <div className="space-y-3">
+                          {q.options.map((option, optIndex) => {
+                            let btnClass = "w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-start gap-3 group/opt ";
+                            
+                            if (isGraded) {
+                              if (optIndex === q.correctAnswer) {
+                                btnClass += "bg-emerald-500/20 border-emerald-500/50 text-emerald-100 font-bold ring-1 ring-emerald-500/50";
+                              } else if (optIndex === userAnswer && optIndex !== q.correctAnswer) {
+                                btnClass += "bg-rose-500/20 border-rose-500/50 text-rose-200 opacity-80";
+                              } else {
+                                btnClass += "border-transparent text-slate-500 opacity-50 cursor-not-allowed";
+                              }
+                            } else {
+                              if (userAnswer === optIndex) {
+                                btnClass += "bg-amber-600 text-white border-amber-500 shadow-lg shadow-amber-900/50 scale-[1.01]";
+                              } else {
+                                btnClass += "bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-500 hover:text-white";
+                              }
+                            }
+
+                            return (
+                              <button
+                                key={optIndex}
+                                onClick={() => handleOptionSelect(q.id, optIndex)}
+                                disabled={isGraded}
+                                className={btnClass}
+                              >
+                                <span className={`shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold border mt-0.5 ${
+                                  isGraded && optIndex === q.correctAnswer 
+                                    ? "border-emerald-400 bg-emerald-500 text-white"
+                                    : userAnswer === optIndex
+                                      ? "border-white bg-white text-amber-600"
+                                      : "border-slate-600 text-slate-500 group-hover/opt:border-slate-400 group-hover/opt:text-slate-300"
+                                }`}>
+                                  {["A", "B", "C", "D"][optIndex]}
+                                </span>
+                                <span>{option}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* 解説エリア（採点後表示） */}
+                        {isGraded && (
+                          <div className="mt-8 pt-6 border-t border-slate-700 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="flex items-start gap-3 text-slate-300 bg-slate-900/50 p-5 rounded-xl border border-slate-700/50">
+                              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-bold text-amber-500 mb-2 text-sm">解説・根拠</p>
+                                <p className="text-sm leading-relaxed text-slate-300">
+                                  {q.explanation}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* アクションボタンエリア */}
+                <div id="result-section" className="sticky bottom-6 z-40 mt-12 flex justify-center w-full px-4">
+                  {!isGraded ? (
+                    <button
+                      onClick={handleGrade}
+                      className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-bold py-4 px-12 rounded-full shadow-xl shadow-amber-900/40 hover:shadow-amber-500/20 transform hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 text-lg border-2 border-amber-400/50"
+                    >
+                      <Award className="w-6 h-6" />
+                      採点する
+                    </button>
+                  ) : (
+                    <div className="w-full max-w-4xl bg-slate-900/95 backdrop-blur-md border border-amber-500/30 rounded-2xl p-4 md:px-8 md:py-4 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-4 zoom-in-95 duration-300">
+                      <div className="flex items-center gap-4 md:gap-8">
+                        <div className="flex flex-col items-center md:items-start shrink-0">
+                          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest leading-tight">Score</p>
+                          <div className="text-3xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-400 leading-none">
+                            {score}<span className="text-lg text-slate-600 font-sans ml-1">/10</span>
+                          </div>
+                        </div>
+                        
+                        <div className="hidden md:block w-px h-8 bg-slate-700"></div>
+
+                        <div className="text-sm font-medium text-slate-300 text-center md:text-left">
+                          {score === 10 ? "全問正解！素晴らしい理解度です。" :
+                           score >= 8 ? "大変よくできました。あと少しです。" :
+                           score >= 5 ? "学習の成果が出ています。復習しましょう。" :
+                           "もう一度基本から確認してみましょう。"}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={startNewQuiz}
+                        className="shrink-0 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium py-2.5 px-6 rounded-full shadow-lg transition-all duration-300 flex items-center gap-2 border border-slate-600 hover:border-slate-500 whitespace-nowrap"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        再挑戦
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </main>
+
+              <footer className="text-center py-8 text-slate-600 text-xs border-t border-slate-800 mt-20">
+                <p>&copy; 2024 Forest Fire Prevention e-Learning System. All rights reserved.</p>
+              </footer>
+            </div>
+          );
         }
 
-        function nextCard(event) {
-            event.stopPropagation(); // Prevent card flip
-            if (currentIndex < flashcards.length - 1) {
-                currentIndex++;
-                renderCard();
-            } else {
-                currentIndex = 0; // Loop
-                renderCard();
-            }
-        }
-
-        function prevCard(event) {
-            event.stopPropagation(); // Prevent card flip
-            if (currentIndex > 0) {
-                currentIndex--;
-                renderCard();
-            } else {
-                currentIndex = flashcards.length - 1;
-                renderCard();
-            }
-        }
-
-        function shuffleCards(event) {
-            event.stopPropagation(); // Prevent card flip
-            // Fisher-Yates shuffle
-            for (let i = flashcards.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [flashcards[i], flashcards[j]] = [flashcards[j], flashcards[i]];
-            }
-            currentIndex = 0;
-            renderCard();
-        }
-
-        function toggleAnswer(id) {
-            const answerDiv = document.getElementById(id);
-            const icon = answerDiv.parentElement.querySelector('.fa-chevron-down') || answerDiv.parentElement.querySelector('.fa-chevron-up');
-            
-            if (answerDiv.classList.contains('hidden')) {
-                answerDiv.classList.remove('hidden');
-                icon.classList.remove('fa-chevron-down');
-                icon.classList.add('fa-chevron-up');
-            } else {
-                answerDiv.classList.add('hidden');
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
-            }
-        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
