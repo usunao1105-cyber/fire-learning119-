@@ -100,7 +100,7 @@
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 3</div>
-      <div class="lesson-desc">火災・林野火災警報の基礎</div>
+      <div class="lesson-desc">大規模林野火災の教訓</div>
       <a href="lesson3/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
