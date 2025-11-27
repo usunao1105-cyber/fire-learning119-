@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学習ガイド：火災警報・林野火災警報</title>
+    <title>学習ガイド＋単語帳：火災警報・林野火災警報</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -18,9 +18,50 @@
         .marker-highlight {
             background: linear-gradient(transparent 60%, #fed7aa 60%);
         }
+        
+        /* Flashcard Flip Styles */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .card-front {
+            background-color: white;
+            color: #1f2937;
+            border: 2px solid #fdba74; /* orange-300 */
+        }
+        .card-back {
+            background-color: #ffedd5; /* orange-100 */
+            color: #9a3412; /* orange-800 */
+            transform: rotateY(180deg);
+            border: 2px solid #f97316; /* orange-500 */
+        }
     </style>
 </head>
-<body class="text-gray-800 antialiased">
+<body class="text-gray-800 antialiased pb-20">
 
     <!-- Header Section -->
     <header class="bg-gradient-to-r from-orange-600 to-red-600 text-white py-8 shadow-lg">
@@ -33,12 +74,12 @@
                 火災警報・林野火災警報<br>学習ガイド
             </h1>
             <p class="text-orange-100 text-lg">
-                消防法に基づく警報の仕組みと、気象条件による火災リスクを学ぶための要点まとめ
+                消防法に基づく警報の仕組みと、気象条件による火災リスクを学ぶ
             </p>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 max-w-4xl py-8 space-y-8">
+    <main class="container mx-auto px-4 max-w-4xl py-8 space-y-10">
 
         <!-- Summary Section -->
         <section class="bg-white rounded-xl p-6 card-shadow border-l-4 border-orange-500">
@@ -46,13 +87,59 @@
                 <i class="fa-solid fa-book-open text-orange-500"></i> 概要
             </h2>
             <p class="leading-relaxed text-gray-600">
-                この学習ガイドは、日本の消防法に基づく「火災警報」および気象条件に関連する「林野火災警報」の仕組みと重要性について解説します。警報が発令される気象的条件（乾燥、強風など）、発令を行う権限者、そして警報発令時に市民に課される火気使用の制限について網羅しています。
+                このガイドは、日本の消防法に基づく「火災警報」および「林野火災警報」について解説します。警報の発令条件、権限者、市民への制限事項、そして林野火災の原因について学びましょう。
             </p>
+        </section>
+
+        <!-- FLASHCARD SECTION (New!) -->
+        <section id="flashcards-area" class="scroll-mt-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-orange-600"></i> 暗記カード
+                </h2>
+                <span class="text-sm bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-bold" id="card-counter">1 / 25</span>
+            </div>
+            
+            <!-- Card Container -->
+            <div class="perspective-1000 w-full h-64 md:h-72 cursor-pointer group" onclick="flipCard()">
+                <div id="flashcard" class="card-inner">
+                    <!-- Front -->
+                    <div class="card-face card-front">
+                        <div class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-4">QUESTION</div>
+                        <p id="card-front-text" class="text-xl md:text-2xl font-bold text-center leading-relaxed">
+                            <!-- JS will inject text here -->
+                        </p>
+                        <div class="mt-6 text-gray-400 text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-rotate"></i> クリックして答えを表示
+                        </div>
+                    </div>
+                    <!-- Back -->
+                    <div class="card-face card-back">
+                        <div class="text-xs font-bold text-orange-700 uppercase tracking-widest mb-4">ANSWER</div>
+                        <p id="card-back-text" class="text-lg md:text-xl font-bold text-center leading-relaxed">
+                            <!-- JS will inject text here -->
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="mt-6 flex justify-center gap-4">
+                <button onclick="prevCard()" class="bg-white hover:bg-gray-50 text-gray-700 font-bold py-2 px-6 rounded-lg shadow border border-gray-200 transition-transform active:scale-95 flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> 前へ
+                </button>
+                <button onclick="shuffleCards()" class="bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold py-2 px-4 rounded-lg shadow border border-orange-200 transition-transform active:scale-95" title="シャッフル">
+                    <i class="fa-solid fa-shuffle"></i>
+                </button>
+                <button onclick="nextCard()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-orange-200 transition-transform active:scale-95 flex items-center gap-2">
+                    次へ <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
         </section>
 
         <!-- Topics Grid -->
         <section>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">学習トピック</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">学習トピック要点</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-white p-4 rounded-lg card-shadow flex items-start gap-3">
                     <div class="bg-red-100 text-red-600 p-2 rounded-full shrink-0">
@@ -60,7 +147,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-gray-800">法的根拠とプロセス</h3>
-                        <p class="text-sm text-gray-600 mt-1">消防法に基づき、誰がどのような権限で発令するか。</p>
+                        <p class="text-sm text-gray-600 mt-1">消防法第22条に基づき、主に市町村長が発令します。</p>
                     </div>
                 </div>
                 <div class="bg-white p-4 rounded-lg card-shadow flex items-start gap-3">
@@ -69,7 +156,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-gray-800">気象条件とリスク</h3>
-                        <p class="text-sm text-gray-600 mt-1">実効湿度や風速、フェーン現象などのリスク要因。</p>
+                        <p class="text-sm text-gray-600 mt-1">実効湿度60%以下、風速10m/s以上などが目安。</p>
                     </div>
                 </div>
                 <div class="bg-white p-4 rounded-lg card-shadow flex items-start gap-3">
@@ -78,7 +165,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-gray-800">制限事項と罰則</h3>
-                        <p class="text-sm text-gray-600 mt-1">発令時に禁止される行為と違反時のペナルティ。</p>
+                        <p class="text-sm text-gray-600 mt-1">火入れやたき火が禁止。違反は30万円以下の罰金。</p>
                     </div>
                 </div>
                 <div class="bg-white p-4 rounded-lg card-shadow flex items-start gap-3">
@@ -87,22 +174,20 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-gray-800">林野火災の特徴</h3>
-                        <p class="text-sm text-gray-600 mt-1">発生しやすい時期や原因、飛び火などの特徴。</p>
+                        <p class="text-sm text-gray-600 mt-1">春先に多発。たき火等の人為的原因が大部分。</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Key Concepts -->
+        <!-- Key Concepts Comparison -->
         <section class="space-y-6">
             <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <i class="fa-solid fa-lightbulb text-yellow-500"></i> 重要コンセプト
+                <i class="fa-solid fa-lightbulb text-yellow-500"></i> 重要コンセプト比較
             </h2>
-
-            <!-- Concept 1: Warning vs Advisory -->
             <div class="bg-white rounded-xl overflow-hidden card-shadow">
                 <div class="bg-gray-50 px-6 py-3 border-b border-gray-100 font-bold text-gray-700">
-                    乾燥注意報と火災警報の違い
+                    乾燥注意報 vs 火災警報
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
@@ -110,9 +195,9 @@
                             <i class="fa-solid fa-triangle-exclamation"></i> 乾燥注意報
                         </h4>
                         <ul class="list-disc list-inside text-gray-600 space-y-1 text-sm">
-                            <li>発表主体：<span class="font-bold">気象庁</span></li>
-                            <li>性質：火災の危険を知らせる<span class="marker-highlight">予報</span></li>
-                            <li>法的拘束力：なし（注意喚起）</li>
+                            <li>発表：<span class="font-bold">気象庁</span></li>
+                            <li>性質：<span class="marker-highlight">予報</span>（注意喚起）</li>
+                            <li>罰則：なし</li>
                         </ul>
                     </div>
                     <div class="border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-8">
@@ -120,149 +205,40 @@
                             <i class="fa-solid fa-bullhorn"></i> 火災警報
                         </h4>
                         <ul class="list-disc list-inside text-gray-600 space-y-1 text-sm">
-                            <li>発令主体：<span class="font-bold">市町村長</span>（消防法）</li>
-                            <li>性質：火気使用制限を伴う<span class="marker-highlight">命令</span></li>
-                            <li>法的拘束力：あり（違反に罰則）</li>
+                            <li>発令：<span class="font-bold">市町村長</span></li>
+                            <li>性質：<span class="marker-highlight">命令</span>（法的拘束力）</li>
+                            <li>罰則：あり</li>
                         </ul>
                     </div>
                 </div>
             </div>
-
-            <!-- Concept 2: Issuance & Weather -->
-            <div class="bg-white rounded-xl p-6 card-shadow">
-                <h3 class="font-bold text-lg mb-4 text-gray-800">発令の仕組みと基準</h3>
-                <div class="space-y-4">
-                    <div class="flex gap-4">
-                        <div class="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
-                            <i class="fa-solid fa-user-tie text-xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-800">誰が出す？</h4>
-                            <p class="text-gray-600 text-sm mt-1">
-                                <span class="font-bold text-orange-700">火災警報</span>は基本的に市町村長（東京23区は消防総監）。<br>
-                                <span class="font-bold text-green-700">林野火災警報</span>は主に都道府県知事が発令します。
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                            <i class="fa-solid fa-temperature-arrow-up text-xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-800">どんな時に？</h4>
-                            <p class="text-gray-600 text-sm mt-1">
-                                <span class="font-bold">実効湿度</span>（木材の乾燥度）が60%以下、風速10m/s以上の強風時など。<br>
-                                <span class="font-bold">フェーン現象</span>（山越えの乾いた熱風）発生時は特に危険です。
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </section>
 
-        <!-- Vocabulary Section -->
-        <section>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-list text-purple-500"></i> 用語集
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Vocab Cards -->
-                <div class="bg-white p-5 rounded-lg card-shadow border-t-4 border-indigo-400">
-                    <h3 class="font-bold text-gray-800 mb-2">実効湿度</h3>
-                    <p class="text-sm text-gray-600 leading-snug">当日の湿度だけでなく、過去数日間の履歴を考慮した指数。木材内部の乾燥状態を表す。</p>
-                </div>
-                <div class="bg-white p-5 rounded-lg card-shadow border-t-4 border-indigo-400">
-                    <h3 class="font-bold text-gray-800 mb-2">火入れ</h3>
-                    <p class="text-sm text-gray-600 leading-snug">土地利用のために、草木などを意図的に燃やすこと（野焼き）。警報下では制限される。</p>
-                </div>
-                <div class="bg-white p-5 rounded-lg card-shadow border-t-4 border-indigo-400">
-                    <h3 class="font-bold text-gray-800 mb-2">火災気象通報</h3>
-                    <p class="text-sm text-gray-600 leading-snug">気象庁から消防機関へ提供される、火災予防上注意が必要な気象情報の連絡。</p>
-                </div>
-                <div class="bg-white p-5 rounded-lg card-shadow border-t-4 border-indigo-400">
-                    <h3 class="font-bold text-gray-800 mb-2">フェーン現象</h3>
-                    <p class="text-sm text-gray-600 leading-snug">湿った空気が山を越えて吹き下りる際、乾燥して高温になる現象。火災リスクを高める。</p>
-                </div>
-                <div class="bg-white p-5 rounded-lg card-shadow border-t-4 border-indigo-400">
-                    <h3 class="font-bold text-gray-800 mb-2">空中消火</h3>
-                    <p class="text-sm text-gray-600 leading-snug">林野火災など地上からの消火が困難な場所で、ヘリコプター等を用いて上空から散水すること。</p>
-                </div>
-                <div class="bg-white p-5 rounded-lg card-shadow border-t-4 border-indigo-400">
-                    <h3 class="font-bold text-gray-800 mb-2">飛び火</h3>
-                    <p class="text-sm text-gray-600 leading-snug">強風にあおられた火の粉が、離れた場所に飛んで新たな火災を引き起こす現象。</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Interactive Questions -->
+        <!-- Interactive Questions (Review) -->
         <section class="pb-10">
             <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-circle-question text-green-500"></i> 確認問題
+                <i class="fa-solid fa-circle-question text-green-500"></i> 最終確認テスト
             </h2>
-            <p class="text-gray-600 mb-6 text-sm">問題をクリックすると答えが表示されます。</p>
-
             <div class="space-y-3">
-                <!-- Q1 -->
                 <div class="group cursor-pointer" onclick="toggleAnswer('ans1')">
                     <div class="bg-white p-4 rounded-lg card-shadow hover:bg-orange-50 transition-colors border-l-4 border-gray-300 group-hover:border-orange-400">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 text-sm md:text-base">Q1. 火災警報の発令根拠となる法律は何条か？また、罰則は？</h3>
+                            <h3 class="font-bold text-gray-800 text-sm md:text-base">Q1. 実効湿度とは何ですか？</h3>
                             <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-orange-500"></i>
                         </div>
                         <div id="ans1" class="hidden mt-4 pt-4 border-t border-gray-100 text-blue-700 font-medium">
-                            A. 消防法第22条。違反した場合、30万円以下の罰金または拘留。
+                            A. 当日だけでなく、過去数日間の履歴を考慮した湿度。木材の乾燥度合いを示し、火災の起こりやすさの目安となります。
                         </div>
                     </div>
                 </div>
-
-                <!-- Q2 -->
                 <div class="group cursor-pointer" onclick="toggleAnswer('ans2')">
                     <div class="bg-white p-4 rounded-lg card-shadow hover:bg-orange-50 transition-colors border-l-4 border-gray-300 group-hover:border-orange-400">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 text-sm md:text-base">Q2. 「乾燥注意報」と「火災警報」の決定的な違いは？</h3>
+                            <h3 class="font-bold text-gray-800 text-sm md:text-base">Q2. フェーン現象が火災リスクを高める理由は？</h3>
                             <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-orange-500"></i>
                         </div>
                         <div id="ans2" class="hidden mt-4 pt-4 border-t border-gray-100 text-blue-700 font-medium">
-                            A. 乾燥注意報は気象庁による「予報」。火災警報は市町村長による法的な「命令」であり、火気使用の制限と罰則を伴う。
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Q3 -->
-                <div class="group cursor-pointer" onclick="toggleAnswer('ans3')">
-                    <div class="bg-white p-4 rounded-lg card-shadow hover:bg-orange-50 transition-colors border-l-4 border-gray-300 group-hover:border-orange-400">
-                        <div class="flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 text-sm md:text-base">Q3. 林野火災が最も発生しやすい季節とその理由は？</h3>
-                            <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-orange-500"></i>
-                        </div>
-                        <div id="ans3" class="hidden mt-4 pt-4 border-t border-gray-100 text-blue-700 font-medium">
-                            A. 春先。枯れ葉が多く燃料となりやすい上、風が強く空気が乾燥しやすいため。
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Q4 -->
-                <div class="group cursor-pointer" onclick="toggleAnswer('ans4')">
-                    <div class="bg-white p-4 rounded-lg card-shadow hover:bg-orange-50 transition-colors border-l-4 border-gray-300 group-hover:border-orange-400">
-                        <div class="flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 text-sm md:text-base">Q4. なぜ単なる湿度ではなく「実効湿度」が重視されるのか？</h3>
-                            <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-orange-500"></i>
-                        </div>
-                        <div id="ans4" class="hidden mt-4 pt-4 border-t border-gray-100 text-blue-700 font-medium">
-                            A. 木材の内部まで乾燥しているかを知るため。過去数日間の履歴を含めることで、実際の火災の起こりやすさを正確に予測できる。
-                        </div>
-                    </div>
-                </div>
-
-                 <!-- Q5 -->
-                 <div class="group cursor-pointer" onclick="toggleAnswer('ans5')">
-                    <div class="bg-white p-4 rounded-lg card-shadow hover:bg-orange-50 transition-colors border-l-4 border-gray-300 group-hover:border-orange-400">
-                        <div class="flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 text-sm md:text-base">Q5. 火災警報発令時に制限される行為は？</h3>
-                            <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-orange-500"></i>
-                        </div>
-                        <div id="ans5" class="hidden mt-4 pt-4 border-t border-gray-100 text-blue-700 font-medium">
-                            A. 山林・原野等での火入れ、たき火、喫煙、花火などの火気使用が制限・禁止される。
+                            A. 山を越えた風が急激に乾燥し高温になるため、物が燃えやすい状態を作り出すからです。
                         </div>
                     </div>
                 </div>
@@ -272,14 +248,112 @@
     </main>
 
     <footer class="bg-gray-800 text-gray-400 py-8 text-center text-sm">
-        <p>安全な生活のために、地域の防災情報を常に確認しましょう。</p>
-        <p class="mt-2">&copy; Fire Safety Study Guide</p>
+        <p>&copy; Fire Safety Study Guide with Flashcards</p>
     </footer>
 
+    <!-- JavaScript Logic -->
     <script>
+        // Data Source
+        const originalFlashcards = [
+            { front: "火災警報の発令根拠となる法律", back: "消防法（第22条）" },
+            { front: "火災警報の発令権者（誰が出すか）", back: "市町村長（東京都23区など一部例外あり）" },
+            { front: "火災警報が発令される主な気象条件", back: "気象の状況が火災の予防上危険であると認められるとき（強風、異常乾燥など）" },
+            { front: "実効湿度（じっこうしつど）とは", back: "木材の乾燥度合いを表す指数。数日間の湿度の履歴を考慮して算出される" },
+            { front: "火災警報発令時の制限事項（例）", back: "山林・原野等での火入れ、たき火、喫煙、花火などの火気使用の制限・禁止" },
+            { front: "気象庁が発表する「乾燥注意報」と「火災警報」の違い", back: "乾燥注意報は「予報」。火災警報は消防法に基づく法的な「命令」" },
+            { front: "林野火災（山火事）の発生が多い季節", back: "春先（枯れ葉が多く、風が強く、空気が乾燥しやすいため）" },
+            { front: "林野火災の出火原因で最も多いもの", back: "たき火（次いで火入れ、タバコなど、人為的な原因が大部分）" },
+            { front: "火災警報の発令基準の例（湿度）", back: "実効湿度が60%以下、最小湿度が25%以下になる見込みのときなど" },
+            { front: "火災警報の発令基準の例（風速）", back: "平均風速が10m/sを超える見込みのときなど" },
+            { front: "「火入れ」とは", back: "土地の利用を目的として、その土地にある草木などを燃やすこと（野焼きなど）" },
+            { front: "林野火災警報の発令主体", back: "主に都道府県知事など（地域防災計画等に基づく）" },
+            { front: "フェーン現象と火災の関係", back: "山を越えて吹き下ろす風が乾燥・高温となり、火災リスクを急激に高める" },
+            { front: "火災気象通報", back: "気象庁から消防機関へ提供される、火災予防上注意を要する気象状況の情報" },
+            { front: "火災警報下での違反に対する罰則", back: "30万円以下の罰金または拘留（消防法第44条）" },
+            { front: "飛び火（とびひ）の危険性", back: "強風時には火の粉が数百メートル以上飛んで延焼を拡大させる現象" },
+            { front: "林野火災を防ぐためのハイキング時の注意点", back: "指定された場所以外での喫煙や火気使用を行わない。火の始末を確実に行う" },
+            { front: "空中消火", back: "林野火災など地上からの消火が困難な場所で、ヘリコプター等を用いて上空から水を散布すること" },
+            { front: "東京都における火災警報の発令権者", back: "東京消防庁消防総監（23区内）、各市町村長（多摩地域等）" },
+            { front: "乾燥注意報の発表基準（東京地方の例）", back: "最小湿度25%以下、かつ実効湿度50%以下" },
+            { front: "消防法第22条の目的", back: "火災の予防および警戒" },
+            { front: "林野火災が発生しやすい時間帯", back: "気温が上がり湿度が下がる昼過ぎから夕方にかけて" },
+            { front: "枯れ草の危険性", back: "着火しやすく、燃え広がる速度が非常に速いため、火災の媒体となりやすい" },
+            { front: "火災警報の解除", back: "気象状況が改善し、火災予防上の危険がなくなったと認められるときに行われる" },
+            { front: "自分の地域の火災警報を知る方法", back: "市町村の防災無線、広報車、ウェブサイト、防災アプリなど" }
+        ];
+
+        // State
+        let flashcards = [...originalFlashcards];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        // Elements
+        const cardElement = document.getElementById('flashcard');
+        const frontText = document.getElementById('card-front-text');
+        const backText = document.getElementById('card-back-text');
+        const counter = document.getElementById('card-counter');
+
+        // Initial Render
+        renderCard();
+
+        // Functions
+        function renderCard() {
+            // Reset position
+            cardElement.classList.remove('card-flipped');
+            isFlipped = false;
+            
+            // Wait slightly for flip animation if needed, but here we update text immediately 
+            // because the user clicked "Next/Prev", not "Flip".
+            const card = flashcards[currentIndex];
+            frontText.textContent = card.front;
+            backText.textContent = card.back;
+            counter.textContent = `${currentIndex + 1} / ${flashcards.length}`;
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                cardElement.classList.add('card-flipped');
+            } else {
+                cardElement.classList.remove('card-flipped');
+            }
+        }
+
+        function nextCard() {
+            if (currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                renderCard();
+            } else {
+                // Loop back to start? Or stop? Let's loop for flow.
+                currentIndex = 0;
+                renderCard();
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCard();
+            } else {
+                currentIndex = flashcards.length - 1;
+                renderCard();
+            }
+        }
+
+        function shuffleCards() {
+            // Fisher-Yates shuffle
+            for (let i = flashcards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [flashcards[i], flashcards[j]] = [flashcards[j], flashcards[i]];
+            }
+            currentIndex = 0;
+            renderCard();
+        }
+
+        // Q&A Toggle Logic (from previous version)
         function toggleAnswer(id) {
             const answerDiv = document.getElementById(id);
-            const icon = answerDiv.parentElement.querySelector('.fa-chevron-down');
+            const icon = answerDiv.parentElement.querySelector('.fa-chevron-down') || answerDiv.parentElement.querySelector('.fa-chevron-up');
             
             if (answerDiv.classList.contains('hidden')) {
                 answerDiv.classList.remove('hidden');
