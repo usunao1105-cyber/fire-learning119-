@@ -110,7 +110,7 @@
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 5</div>
-      <div class="lesson-desc">機械器具の取扱い</div>
+      <div class="lesson-desc">火災煙の危険性と高度な安全対策</div>
       <a href="lesson5/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
