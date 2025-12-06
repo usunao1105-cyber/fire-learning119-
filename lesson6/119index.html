@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>トリアージシステム 操作ガイド</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+        
+        body { font-family: 'Noto Sans JP', sans-serif; }
+        
+        /* アニメーション定義 */
+        .fade-enter { opacity: 0; transform: translateY(10px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.5s ease; }
+        .fade-exit { opacity: 1; }
+        .fade-exit-active { opacity: 0; transition: all 0.3s ease; }
+
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        .packet-move {
+            offset-path: path('M 100 250 Q 300 50 500 250');
+            animation: move 1s linear forwards;
+        }
+        @keyframes move {
+            0% { offset-distance: 0%; opacity: 1; }
+            100% { offset-distance: 100%; opacity: 0; }
+        }
+
+        .tap-effect {
+            animation: tap 0.4s ease-out forwards;
+        }
+        @keyframes tap {
+            0% { r: 0; opacity: 0.5; }
+            100% { r: 20; opacity: 0; }
+        }
+        
+        /* SVG要素のスタイル */
+        .device-screen { fill: #f8fafc; stroke: #334155; stroke-width: 3; }
+        .btn { cursor: pointer; transition: filter 0.2s; }
+        .btn:hover { filter: brightness(0.95); }
+        .triage-btn-red { fill: #ef4444; }
+        .triage-btn-yellow { fill: #eab308; }
+        .triage-btn-green { fill: #22c55e; }
+        .triage-btn-black { fill: #1f2937; }
+        .send-btn { fill: #2563eb; }
+        
+        .hq-counter { font-family: monospace; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        <!-- ヘッダー -->
+        <div class="bg-slate-800 text-white p-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold flex items-center gap-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    操作マニュアル
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">オンライン・トリアージシステム</p>
+            </div>
+            <div class="text-right">
+                <div id="step-indicator" class="text-xl font-bold text-blue-400">Step 1/4</div>
+            </div>
+        </div>
+
+        <!-- メインアニメーションエリア -->
+        <div class="relative bg-slate-50 p-8 flex justify-center items-center h-[500px]">
+            
+            <svg id="main-svg" width="800" height="400" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- 背景のつながり -->
+                <path d="M 200 250 Q 400 50 600 250" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="5,5" />
+                
+                <!-- 1. 現場のスマホ (左) -->
+                <g id="phone-group" transform="translate(100, 100)">
+                    <rect x="0" y="0" width="160" height="280" rx="20" class="device-screen" />
+                    <rect x="10" y="10" width="140" height="20" rx="5" fill="#cbd5e1" /> <!-- Speaker -->
+                    
+                    <!-- 画面コンテンツ (ログイン) -->
+                    <g id="screen-login">
+                        <text x="80" y="60" text-anchor="middle" font-size="14" font-weight="bold" fill="#334155">ログイン</text>
+                        <rect x="20" y="90" width="120" height="30" rx="4" fill="#e2e8f0" stroke="#94a3b8" />
+                        <text x="30" y="110" font-size="10" fill="#64748b">事案名: ◯◯事故</text>
+                        <rect x="20" y="130" width="120" height="30" rx="4" fill="#e2e8f0" stroke="#94a3b8" />
+                        <text x="30" y="150" font-size="10" fill="#64748b">所属: 第1小隊</text>
+                        <rect id="login-btn" class="btn" x="20" y="200" width="120" height="40" rx="8" fill="#334155" />
+                        <text x="80" y="225" text-anchor="middle" font-size="12" fill="white" font-weight="bold">活動開始</text>
+                    </g>
+
+                    <!-- 画面コンテンツ (入力) -->
+                    <g id="screen-input" style="opacity: 0; display: none;">
+                        <rect x="0" y="0" width="160" height="40" rx="0" fill="#1e293b" />
+                        <text x="80" y="25" text-anchor="middle" font-size="12" fill="white">第1小隊</text>
+                        
+                        <text x="20" y="65" font-size="10" font-weight="bold" fill="#64748b">No. 001</text>
+                        
+                        <!-- トリアージボタン -->
+                        <rect id="btn-red" class="btn triage-btn-red" x="20" y="80" width="55" height="50" rx="8" opacity="0.3" />
+                        <rect class="btn triage-btn-yellow" x="85" y="80" width="55" height="50" rx="8" opacity="0.3" />
+                        <rect class="btn triage-btn-green" x="20" y="140" width="55" height="50" rx="8" opacity="0.3" />
+                        <rect class="btn triage-btn-black" x="85" y="140" width="55" height="50" rx="8" opacity="0.3" />
+                        
+                        <!-- 送信ボタン -->
+                        <rect id="btn-send" class="btn send-btn" x="20" y="210" width="120" height="40" rx="8" />
+                        <text x="80" y="235" text-anchor="middle" font-size="12" fill="white" font-weight="bold">データを送信</text>
+                    </g>
+                </g>
+                <text x="180" y="400" text-anchor="middle" font-weight="bold" fill="#475569">現場 (スマホ)</text>
+
+                <!-- 2. クラウド (中央) -->
+                <g id="cloud-group" transform="translate(400, 80)">
+                    <circle cx="0" cy="0" r="40" fill="#bfdbfe" opacity="0.5" class="pulse-ring" />
+                    <path d="M-40,10 Q-20,-30 20,-30 T40,10 T10,40 T-40,10" fill="white" stroke="#3b82f6" stroke-width="2" />
+                    <text x="0" y="5" text-anchor="middle" font-size="10" font-weight="bold" fill="#1d4ed8">Cloud</text>
+                </g>
+
+                <!-- データパケット -->
+                <circle id="data-packet" cx="0" cy="0" r="8" fill="#ef4444" style="opacity: 0;">
+                    <animateMotion id="packet-anim" dur="1s" begin="indefinite" fill="freeze"
+                        path="M 180 200 Q 400 50 600 200" />
+                </circle>
+
+                <!-- 3. 本部のPC (右) -->
+                <g id="hq-group" transform="translate(550, 120)">
+                    <rect x="0" y="0" width="220" height="150" rx="5" fill="#f1f5f9" stroke="#475569" stroke-width="4" />
+                    <path d="M0,150 L-20,180 H240 L220,150" fill="#94a3b8" /> <!-- Stand -->
+                    
+                    <!-- ダッシュボード画面 -->
+                    <g>
+                        <rect x="10" y="10" width="200" height="30" fill="#1e293b" rx="2" />
+                        <text x="110" y="30" text-anchor="middle" font-size="12" fill="white">統合管制本部</text>
+                        
+                        <!-- カウンター -->
+                        <rect x="15" y="50" width="40" height="40" fill="white" stroke="#cbd5e1" />
+                        <rect x="15" y="50" width="5" height="40" fill="#ef4444" />
+                        <text id="count-red" x="40" y="75" text-anchor="middle" font-size="16" class="hq-counter" fill="#334155">0</text>
+                        
+                        <rect x="65" y="50" width="40" height="40" fill="white" stroke="#cbd5e1" />
+                        <rect x="65" y="50" width="5" height="40" fill="#eab308" />
+                        <text x="90" y="75" text-anchor="middle" font-size="16" class="hq-counter" fill="#334155">0</text>
+                        
+                        <rect x="115" y="50" width="40" height="40" fill="white" stroke="#cbd5e1" />
+                        <rect x="115" y="50" width="5" height="40" fill="#22c55e" />
+                        <text x="140" y="75" text-anchor="middle" font-size="16" class="hq-counter" fill="#334155">5</text>
+                        
+                        <!-- リスト -->
+                        <rect x="15" y="100" width="190" height="8" fill="#e2e8f0" rx="2" />
+                        <rect x="15" y="112" width="190" height="8" fill="#e2e8f0" rx="2" />
+                        <rect id="new-record" x="15" y="124" width="190" height="8" fill="#fee2e2" rx="2" style="opacity: 0;" />
+                    </g>
+                </g>
+                <text x="660" y="330" text-anchor="middle" font-weight="bold" fill="#475569">本部 (PC/タブレット)</text>
+
+                <!-- 手のカーソル -->
+                <g id="hand-cursor" style="display: none;">
+                    <circle cx="0" cy="0" r="15" fill="rgba(255, 255, 255, 0.5)" stroke="#2563eb" stroke-width="2" />
+                    <image href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><path d='M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zM11.5 1C15.09 1 18 3.91 18 7.5c0 1.65-.67 3.15-1.76 4.24l-1.76 1.76v.5c0 .28-.22.5-.5.5h-5c-.28 0-.5-.22-.5-.5v-.5l-1.76-1.76C5.67 10.65 5 9.15 5 7.5 5 3.91 7.91 1 11.5 1z'/></svg>" x="-12" y="-12" width="24" height="24" />
+                </g>
+            </svg>
+        </div>
+
+        <!-- 説明テキストエリア -->
+        <div class="p-8 border-t border-slate-100">
+            <h2 id="step-title" class="text-xl font-bold text-slate-800 mb-2">Step 1: ログイン</h2>
+            <p id="step-desc" class="text-slate-600 text-lg min-h-[3em]">
+                配布されたURLにアクセスし、現場共通の「事案名」と自分の「所属」を選択して、活動開始ボタンを押します。
+            </p>
+            
+            <div class="flex justify-between mt-6">
+                <button id="prev-btn" class="px-6 py-3 rounded-lg bg-slate-200 text-slate-500 font-bold disabled:opacity-50" disabled>戻る</button>
+                <button id="next-btn" class="px-8 py-3 rounded-lg bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-700 transition-transform active:scale-95">次へ進む</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 状態管理
+        let currentStep = 1;
+        const totalSteps = 4;
+
+        // 要素の取得
+        const els = {
+            stepIndicator: document.getElementById('step-indicator'),
+            stepTitle: document.getElementById('step-title'),
+            stepDesc: document.getElementById('step-desc'),
+            prevBtn: document.getElementById('prev-btn'),
+            nextBtn: document.getElementById('next-btn'),
+            screenLogin: document.getElementById('screen-login'),
+            screenInput: document.getElementById('screen-input'),
+            btnRed: document.getElementById('btn-red'),
+            packet: document.getElementById('data-packet'),
+            packetAnim: document.getElementById('packet-anim'),
+            countRed: document.getElementById('count-red'),
+            newRecord: document.getElementById('new-record'),
+            cursor: document.getElementById('hand-cursor')
+        };
+
+        // ステップデータ
+        const steps = [
+            {
+                id: 1,
+                title: "Step 1: ログインと開始",
+                desc: "URLにアクセスし、今回の「事案名」と自分の「所属隊」を入力・選択します。準備ができたら「活動開始」をタップします。",
+                action: () => {
+                    showLoginScreen();
+                    simulateTap(160, 310); // 活動開始ボタンの位置
+                }
+            },
+            {
+                id: 2,
+                title: "Step 2: 傷病者情報の入力",
+                desc: "トリアージタッグの番号を入力し、判定結果（色）を選択します。ここでは「赤（緊急）」を選択してみましょう。",
+                action: () => {
+                    showInputScreen();
+                    setTimeout(() => {
+                        simulateTap(150, 200); // 赤ボタンの位置
+                        els.btnRed.style.opacity = "1";
+                        els.btnRed.style.stroke = "#334155";
+                        els.btnRed.style.strokeWidth = "2";
+                    }, 500);
+                }
+            },
+            {
+                id: 3,
+                title: "Step 3: データの送信",
+                desc: "入力が終わったら「データを送信」ボタンをタップします。すると、データが瞬時にクラウドサーバーへ飛びます。",
+                action: () => {
+                    // 前の状態維持
+                    els.screenLogin.style.display = "none";
+                    els.screenInput.style.display = "block";
+                    els.screenInput.style.opacity = "1";
+                    els.btnRed.style.opacity = "1";
+                    
+                    simulateTap(160, 330); // 送信ボタン
+                    
+                    // パケットアニメーション発火
+                    setTimeout(() => {
+                        els.packet.style.opacity = "1";
+                        els.packetAnim.beginElement();
+                    }, 300);
+                }
+            },
+            {
+                id: 4,
+                title: "Step 4: 本部でのリアルタイム確認",
+                desc: "現場から送られたデータは、即座に本部の画面に反映されます。「赤」のカウントが増え、リストに新しい記録が追加されました。",
+                action: () => {
+                    // 完了状態
+                    els.screenLogin.style.display = "none";
+                    els.screenInput.style.display = "block";
+                    els.screenInput.style.opacity = "1";
+                    els.btnRed.style.opacity = "0.3"; // リセット表現
+                    els.btnRed.style.stroke = "none";
+                    els.packet.style.opacity = "0";
+
+                    // 本部画面更新
+                    els.countRed.textContent = "1";
+                    els.countRed.style.fill = "#ef4444";
+                    els.countRed.style.transform = "scale(1.5)";
+                    setTimeout(() => els.countRed.style.transform = "scale(1)", 300);
+                    
+                    els.newRecord.style.opacity = "1";
+                }
+            }
+        ];
+
+        // 画面リセット関数
+        function resetScene() {
+            els.screenLogin.style.display = "block";
+            els.screenLogin.style.opacity = "1";
+            els.screenInput.style.display = "none";
+            els.screenInput.style.opacity = "0";
+            els.btnRed.style.opacity = "0.3";
+            els.btnRed.style.stroke = "none";
+            els.packet.style.opacity = "0";
+            els.countRed.textContent = "0";
+            els.countRed.style.fill = "#334155";
+            els.newRecord.style.opacity = "0";
+            els.cursor.style.display = "none";
+        }
+
+        function showLoginScreen() {
+            resetScene();
+        }
+
+        function showInputScreen() {
+            els.screenLogin.style.opacity = "0";
+            setTimeout(() => {
+                els.screenLogin.style.display = "none";
+                els.screenInput.style.display = "block";
+                requestAnimationFrame(() => {
+                    els.screenInput.style.opacity = "1";
+                });
+            }, 300);
+        }
+
+        // タップ演出
+        function simulateTap(x, y) {
+            els.cursor.style.display = "block";
+            els.cursor.setAttribute("transform", `translate(${x}, ${y})`);
+            
+            // タップアニメーション
+            const tapCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            tapCircle.setAttribute("cx", x);
+            tapCircle.setAttribute("cy", y);
+            tapCircle.setAttribute("r", "0");
+            tapCircle.setAttribute("fill", "rgba(59, 130, 246, 0.5)");
+            tapCircle.classList.add("tap-effect");
+            document.getElementById("main-svg").appendChild(tapCircle);
+            
+            setTimeout(() => tapCircle.remove(), 500);
+            setTimeout(() => els.cursor.style.display = "none", 800);
+        }
+
+        // ステップ更新処理
+        function updateStep() {
+            const step = steps[currentStep - 1];
+            
+            // テキスト更新
+            els.stepIndicator.textContent = `Step ${currentStep}/${totalSteps}`;
+            els.stepTitle.textContent = step.title;
+            els.stepDesc.textContent = step.desc;
+
+            // ボタン状態
+            els.prevBtn.disabled = currentStep === 1;
+            els.nextBtn.textContent = currentStep === totalSteps ? "最初に戻る" : "次へ進む";
+
+            // アクション実行
+            step.action();
+        }
+
+        // イベントリスナー
+        els.nextBtn.addEventListener('click', () => {
+            if (currentStep < totalSteps) {
+                currentStep++;
+            } else {
+                currentStep = 1; // リセット
+            }
+            updateStep();
+        });
+
+        els.prevBtn.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStep();
+            }
+        });
+
+        // 初期化
+        resetScene();
+
+    </script>
+</body>
+</html>
