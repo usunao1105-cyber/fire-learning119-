@@ -130,7 +130,7 @@
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 9</div>
-      <div class="lesson-desc">危険物火災対応</div>
+      <div class="lesson-desc">巨大地震・津波 防災学習</div>
       <a href="lesson9/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
