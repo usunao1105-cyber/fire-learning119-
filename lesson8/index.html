@@ -1,881 +1,907 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Clock, Users, FileText, Settings, Plus, Trash2, Share2, AlertTriangle, Play, MapPin, Droplets, LogOut, CheckCircle, HelpCircle, X, ChevronRight, ChevronLeft } from 'lucide-react';
-
-// Rank definitions
-const RANKS = [
-  { id: 'dancho', label: '団長', short: '団長' },
-  { id: 'fukudancho', label: '副団長', short: '副団' },
-  { id: 'bundancho', label: '分団長', short: '分団' },
-  { id: 'fukubundancho', label: '副分団長', short: '副分' },
-  { id: 'bucho', label: '部長', short: '部長' },
-  { id: 'hancho', label: '班長', short: '班長' },
-  { id: 'danin', label: '団員', short: '団員' },
-];
-
-// Utility to get formatted time string HH:MM
-const getCurrentTimeStr = () => {
-  const now = new Date();
-  return now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-};
-
-// Utility to get full timestamp
-const getFullTimestamp = () => {
-  const now = new Date();
-  return `${now.getMonth() + 1}/${now.getDate()} ${now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`;
-};
-
-// --- Manual Animation Components ---
-
-const AnimHand = ({ x, y }) => (
-  <g className="animate-pulse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }}>
-    <path d="M10,20 L15,15 L25,15 L30,20 L30,35 L25,40 L15,40 L10,35 Z" fill="white" stroke="#333" strokeWidth="2" transform={`translate(${x}, ${y}) scale(0.8)`} />
-    <circle cx={x + 20} cy={y + 15} r="3" fill="#333" />
-  </g>
-);
-
-const ManualSlide1 = () => (
-  <div className="flex flex-col items-center">
-    <div className="w-48 h-32 bg-gray-100 rounded-lg relative overflow-hidden border border-gray-300 mb-4 flex justify-center items-center">
-      <svg width="100%" height="100%" viewBox="0 0 200 120">
-        {/* Background List */}
-        <rect x="20" y="20" width="160" height="20" rx="4" fill="white" stroke="#e5e7eb" />
-        <rect x="20" y="50" width="160" height="20" rx="4" fill="white" stroke="#e5e7eb" />
-        {/* Settings Icon */}
-        <circle cx="170" cy="100" r="15" fill="#2563EB" />
-        <path d="M165,100 L175,100 M170,95 L170,105" stroke="white" strokeWidth="3" />
-        {/* Hand Animation */}
-        <g>
-          <path d="M160,110 L180,110 L170,90 Z" fill="rgba(255,255,255,0.5)" className="animate-ping" style={{ animationDuration: '2s' }} />
-          <circle cx="170" cy="100" r="5" fill="orange" className="animate-ping" />
-        </g>
-      </svg>
-    </div>
-    <h3 className="font-bold text-lg mb-2">1. 事前の団員登録</h3>
-    <p className="text-sm text-gray-600 text-center">
-      まずは「設定」タブから、分団のメンバーを登録しておきましょう。一度登録すれば次回以降も使えます。
-    </p>
-  </div>
-);
-
-const ManualSlide2 = () => (
-  <div className="flex flex-col items-center">
-    <div className="w-48 h-32 bg-gray-100 rounded-lg relative overflow-hidden border border-gray-300 mb-4 flex justify-center items-center">
-      <svg width="100%" height="100%" viewBox="0 0 200 120">
-        {/* Input Field */}
-        <rect x="20" y="20" width="160" height="30" rx="4" fill="white" stroke="#e5e7eb" />
-        <text x="30" y="40" fontSize="10" fill="#9ca3af">場所を入力...</text>
-        {/* Start Button */}
-        <rect x="40" y="70" width="120" height="30" rx="15" fill="#DC2626" className="animate-pulse" />
-        <text x="100" y="89" fontSize="12" fill="white" textAnchor="middle" fontWeight="bold">出動開始</text>
-      </svg>
-    </div>
-    <h3 className="font-bold text-lg mb-2">2. 出動開始</h3>
-    <p className="text-sm text-gray-600 text-center">
-      火災が発生したら「活動記録」タブへ。「本部指令」か「自己覚知」かを選び、場所を入れて「出動開始」を押します。
-    </p>
-  </div>
-);
-
-const ManualSlide3 = () => (
-  <div className="flex flex-col items-center">
-    <div className="w-48 h-32 bg-gray-100 rounded-lg relative overflow-hidden border border-gray-300 mb-4 flex justify-center items-center">
-      <svg width="100%" height="100%" viewBox="0 0 200 120">
-        {/* Member Row */}
-        <rect x="20" y="40" width="160" height="40" rx="4" fill="white" stroke="#e5e7eb" />
-        <text x="30" y="65" fontSize="12" fill="#374151">団員A</text>
-        {/* Button */}
-        <rect x="120" y="48" width="50" height="24" rx="4" fill="#2563EB">
-          <animate attributeName="fill" values="#2563EB;#16A34A;#2563EB" dur="3s" repeatCount="indefinite" />
-        </rect>
-        <text x="145" y="64" fontSize="10" fill="white" textAnchor="middle">現場到着</text>
-        {/* Hand */}
-        <circle cx="145" cy="60" r="10" fill="orange" opacity="0.5" className="animate-ping" />
-      </svg>
-    </div>
-    <h3 className="font-bold text-lg mb-2">3. 隊員管理（重要）</h3>
-    <p className="text-sm text-gray-600 text-center">
-      遅れて来た団員がいたら、「隊員管理」タブでその人の<b>「現場到着」</b>ボタンを押します。これで正確な活動時間を記録できます。
-    </p>
-  </div>
-);
-
-const ManualSlide4 = () => (
-  <div className="flex flex-col items-center">
-    <div className="w-48 h-32 bg-gray-100 rounded-lg relative overflow-hidden border border-gray-300 mb-4 flex justify-center items-center">
-      <svg width="100%" height="100%" viewBox="0 0 200 120">
-        {/* Report Paper */}
-        <rect x="50" y="10" width="100" height="100" rx="2" fill="white" stroke="#e5e7eb" shadow="true" />
-        <line x1="60" y1="30" x2="140" y2="30" stroke="#d1d5db" strokeWidth="2" />
-        <line x1="60" y1="45" x2="140" y2="45" stroke="#d1d5db" strokeWidth="2" />
-        <line x1="60" y1="60" x2="120" y2="60" stroke="#d1d5db" strokeWidth="2" />
-        
-        {/* Copy Button */}
-        <rect x="40" y="80" width="120" height="30" rx="4" fill="#16A34A" />
-        <text x="100" y="99" fontSize="12" fill="white" textAnchor="middle" fontWeight="bold">テキストをコピー</text>
-        
-        {/* Checkmark animation */}
-        <path d="M90,50 L95,55 L105,45" fill="none" stroke="#16A34A" strokeWidth="3" strokeDasharray="20" strokeDashoffset="20">
-          <animate attributeName="stroke-dashoffset" to="0" dur="1s" fill="freeze" repeatCount="indefinite" />
-        </path>
-      </svg>
-    </div>
-    <h3 className="font-bold text-lg mb-2">4. 報告書の作成</h3>
-    <p className="text-sm text-gray-600 text-center">
-      活動が終わったら「活動終了」を押し、「報告・出力」タブへ。自動作成された日報をコピーして、LINEなどで報告できます。
-    </p>
-  </div>
-);
-
-const ManualModal = ({ onClose }) => {
-  const [step, setStep] = useState(0);
-  const slides = [
-    <ManualSlide1 />,
-    <ManualSlide2 />,
-    <ManualSlide3 />,
-    <ManualSlide4 />
-  ];
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-sm rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="p-4 border-b flex justify-between items-center bg-blue-50">
-          <h2 className="font-bold text-blue-900 flex items-center gap-2">
-            <HelpCircle className="w-5 h-5" /> 取扱マニュアル
-          </h2>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-blue-100 text-blue-900">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 p-6 flex flex-col items-center justify-center">
-          {slides[step]}
-        </div>
-
-        {/* Footer / Nav */}
-        <div className="p-4 border-t bg-gray-50 flex justify-between items-center">
-          <button 
-            onClick={() => setStep(Math.max(0, step - 1))}
-            disabled={step === 0}
-            className={`p-2 rounded flex items-center gap-1 font-bold ${step === 0 ? 'text-gray-300' : 'text-blue-600 hover:bg-blue-100'}`}
-          >
-            <ChevronLeft className="w-5 h-5" /> 前へ
-          </button>
-          
-          <div className="flex gap-1">
-            {slides.map((_, i) => (
-              <div key={i} className={`w-2 h-2 rounded-full ${i === step ? 'bg-blue-600' : 'bg-gray-300'}`} />
-            ))}
-          </div>
-
-          <button 
-            onClick={() => {
-              if (step < slides.length - 1) {
-                setStep(step + 1);
-              } else {
-                onClose();
-              }
-            }}
-            className="p-2 rounded flex items-center gap-1 font-bold text-blue-600 hover:bg-blue-100"
-          >
-            {step === slides.length - 1 ? '閉じる' : '次へ'} <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Sub Components ---
-
-const SettingsView = ({ members, addMember, removeMember }) => {
-  const [newName, setNewName] = useState('');
-  const [newRank, setNewRank] = useState('danin');
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-
-  const getRankLabel = (rankId) => RANKS.find(r => r.id === rankId)?.label || rankId;
-
-  const handleDeleteClick = (id) => {
-    if (deleteConfirmId === id) {
-      removeMember(id);
-      setDeleteConfirmId(null);
-    } else {
-      setDeleteConfirmId(id);
-      setTimeout(() => setDeleteConfirmId(null), 3000);
-    }
-  };
-
-  return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-24">
-        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-            <Users className="w-5 h-5 mr-2" /> 団員名簿登録
-          </h3>
-          <div className="flex flex-col gap-3">
-            <input
-              type="text"
-              placeholder="氏名 (例: 消防 太郎)"
-              className="border p-3 rounded text-lg"
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-            />
-            <select
-              className="border p-3 rounded text-lg bg-white"
-              value={newRank}
-              onChange={e => setNewRank(e.target.value)}
-            >
-              {RANKS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-            </select>
-            <button
-              onClick={() => {
-                if (newName) {
-                  addMember(newName, newRank);
-                  setNewName('');
-                }
-              }}
-              className="bg-blue-600 text-white p-3 rounded font-bold flex justify-center items-center gap-2 hover:bg-blue-700 active:bg-blue-800 transition"
-            >
-              <Plus className="w-5 h-5" /> 追加する
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-500 mb-2">登録済み団員 ({members.length}名)</h3>
-          <div className="divide-y">
-            {members.length === 0 && <p className="text-gray-400 py-2">登録された団員がいません</p>}
-            {members.map(m => (
-              <div key={m.id} className="py-3 flex justify-between items-center">
-                <div>
-                  <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded mr-2">
-                    {getRankLabel(m.rank)}
-                  </span>
-                  <span className="font-medium text-lg">{m.name}</span>
-                </div>
-                
-                <button 
-                  onClick={() => handleDeleteClick(m.id)}
-                  className={`p-2 rounded flex items-center transition-all duration-200 ${
-                    deleteConfirmId === m.id 
-                      ? 'bg-red-600 text-white px-3' 
-                      : 'text-red-500 hover:bg-red-50'
-                  }`}
-                >
-                  {deleteConfirmId === m.id ? (
-                    <span className="text-xs font-bold whitespace-nowrap">削除確定</span>
-                  ) : (
-                    <Trash2 className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ActivityView = ({ incident, setIncident, startIncident, addLog, endIncident, currentTime, onShowManual }) => {
-  const [customLogText, setCustomLogText] = useState('');
-  const [isEnding, setIsEnding] = useState(false);
-
-  const handleEndClick = () => {
-    if (isEnding) {
-      endIncident();
-      setIsEnding(false);
-    } else {
-      setIsEnding(true);
-      setTimeout(() => setIsEnding(false), 3000);
-    }
-  };
-
-  // Header Component reused
-  const Header = () => (
-    <div className="flex-none bg-red-50 border-b border-red-100 p-3 flex justify-between items-center shadow-sm z-10">
-      <div className="min-w-0 flex-1 mr-2">
-        {incident.active ? (
-          <>
-             <div className="flex items-center gap-2 mb-1">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded ${incident.type === 'hq' ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'}`}>
-                {incident.type === 'hq' ? '指令' : '覚知'}
-              </span>
-              <span className="font-bold text-gray-800 text-sm whitespace-nowrap">
-                {incident.startTime.split(' ')[1]}~
-              </span>
-            </div>
-            <div className="text-sm text-gray-600 truncate font-medium">{incident.location || '場所未入力'}</div>
-          </>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-800">活動記録</span>
-            <button onClick={onShowManual} className="text-blue-600 bg-blue-50 px-2 py-1 rounded-full text-xs flex items-center gap-1 border border-blue-200">
-              <HelpCircle className="w-3 h-3" /> 使い方
-            </button>
-          </div>
-        )}
-      </div>
-      <div className="text-right flex-none flex items-center gap-3">
-         <div>
-            <div className="text-2xl font-mono font-bold text-gray-900 leading-none tracking-tight">
-              {currentTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
-            </div>
-            {incident.active && <div className="text-xs text-red-600 animate-pulse font-bold mt-1 text-right">活動中</div>}
-         </div>
-         {incident.active && (
-           <button onClick={onShowManual} className="text-gray-400 hover:text-blue-600">
-             <HelpCircle className="w-6 h-6" />
-           </button>
-         )}
-      </div>
-    </div>
-  );
-
-  if (!incident.active) {
-    return (
-      <div className="flex flex-col h-full bg-gray-50">
-        <Header />
-        <div className="flex-1 flex flex-col justify-center items-center p-6 space-y-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-gray-800">出動待機中</h2>
-            <p className="text-gray-500">事案が発生したらボタンを押してください</p>
-          </div>
-
-          <div className="w-full max-w-sm space-y-4">
-            <div className="bg-white p-4 rounded-lg shadow-sm border space-y-3">
-              <label className="block text-sm font-bold text-gray-700">覚知形態</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setIncident({ ...incident, type: 'hq' })}
-                  className={`flex-1 p-3 rounded font-bold ${incident.type === 'hq' ? 'bg-red-100 text-red-700 border-2 border-red-500' : 'bg-gray-50 text-gray-500 border'}`}
-                >
-                  本部指令
-                </button>
-                <button
-                  onClick={() => setIncident({ ...incident, type: 'self' })}
-                  className={`flex-1 p-3 rounded font-bold ${incident.type === 'self' ? 'bg-orange-100 text-orange-700 border-2 border-orange-500' : 'bg-gray-50 text-gray-500 border'}`}
-                >
-                  自己覚知
-                </button>
-              </div>
-              
-              <label className="block text-sm font-bold text-gray-700 mt-2">出動場所・目標</label>
-              <input 
-                type="text" 
-                placeholder="例: 〇〇町1丁目付近" 
-                className="w-full p-3 border rounded text-lg"
-                value={incident.location}
-                onChange={(e) => setIncident({...incident, location: e.target.value})}
-              />
-            </div>
-
-            <button
-              onClick={startIncident}
-              className="w-full bg-red-600 text-white text-xl font-bold p-6 rounded-xl shadow-lg hover:bg-red-700 active:transform active:scale-95 transition flex items-center justify-center gap-3"
-            >
-              <AlertTriangle className="w-8 h-8" />
-              出動開始
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <Header />
-
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-24">
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <button onClick={() => addLog('現場到着')} className="bg-blue-600 text-white p-4 rounded-lg font-bold shadow active:bg-blue-700 flex flex-col items-center gap-1 transition-colors">
-            <MapPin className="w-6 h-6" /> 現着
-          </button>
-          <button onClick={() => addLog('水利部署')} className="bg-cyan-600 text-white p-4 rounded-lg font-bold shadow active:bg-cyan-700 flex flex-col items-center gap-1 transition-colors">
-            <Droplets className="w-6 h-6" /> 水利部署
-          </button>
-          <button onClick={() => addLog('放水開始')} className="bg-indigo-600 text-white p-4 rounded-lg font-bold shadow active:bg-indigo-700 flex flex-col items-center gap-1 transition-colors">
-            <Play className="w-6 h-6" /> 放水開始
-          </button>
-          <button onClick={() => addLog('鎮圧/放水停止')} className="bg-green-600 text-white p-4 rounded-lg font-bold shadow active:bg-green-700 flex flex-col items-center gap-1 transition-colors">
-            <CheckCircle className="w-6 h-6" /> 鎮圧・停止
-          </button>
-        </div>
-
-        {/* Custom Log */}
-        <div className="flex gap-2">
-          <input 
-            type="text" 
-            className="flex-1 border border-gray-300 p-3 rounded-lg shadow-sm" 
-            placeholder="その他の活動メモ..." 
-            value={customLogText}
-            onChange={(e) => setCustomLogText(e.target.value)}
-          />
-          <button 
-            onClick={() => { if(customLogText) { addLog('メモ', customLogText); setCustomLogText(''); }}}
-            className="bg-gray-700 text-white px-5 rounded-lg font-bold shadow active:bg-gray-800 whitespace-nowrap"
-          >
-            記録
-          </button>
-        </div>
-
-        {/* Recent Logs Preview */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
-            <Clock className="w-3 h-3" /> 直近の記録
-          </div>
-          <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
-            {incident.logs && incident.logs.length > 0 ? (
-              incident.logs.slice().reverse().map((log, i) => (
-                <div key={i} className="px-3 py-2.5 text-sm flex gap-3 items-start hover:bg-gray-50">
-                  <span className="font-mono text-gray-500 whitespace-nowrap mt-0.5">{log.time}</span>
-                  <div className="flex-1 min-w-0">
-                    <span className="font-bold text-gray-800 mr-2">{log.event}</span>
-                    <span className="text-gray-600 break-all">{log.note}</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="p-4 text-center text-gray-400 text-sm">記録はまだありません</div>
-            )}
-          </div>
-        </div>
-
-        <div className="pt-4">
-           <button 
-             onClick={handleEndClick} 
-             className={`w-full border-2 font-bold p-3 rounded-lg shadow-sm transition-all duration-200 ${isEnding ? 'bg-red-600 text-white border-red-600 scale-105' : 'bg-white text-red-600 border-red-600 hover:bg-red-50'}`}
-           >
-             {isEnding ? '本当に終了しますか？(タップして確定)' : '活動終了・報告作成へ'}
-           </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const MembersAttendanceView = ({ incident, members, markAttendance, onShowManual }) => {
-  if (!incident.active) return <div className="p-8 text-center text-gray-500 mt-10">出動中でないため記録できません。</div>;
-
-  const getRankLabel = (rankId) => RANKS.find(r => r.id === rankId)?.label || rankId;
-
-  // Sort members
-  const getMemberStatus = (id) => incident.attendance.find(a => a.memberId === id);
-  
-  const sortedMembers = [...members].sort((a, b) => {
-    const rankOrder = ['dancho', 'fukudancho', 'bundancho', 'fukubundancho', 'bucho', 'hancho', 'danin'];
-    return rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
-  });
-
-  return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
-        <h3 className="text-lg font-bold mb-2 flex items-center justify-between sticky top-0 bg-gray-50 py-2 z-10">
-          <div className="flex items-center gap-2">
-            <span>隊員・時間管理</span>
-            <button onClick={onShowManual} className="text-blue-500 hover:text-blue-700">
-               <HelpCircle className="w-5 h-5" />
-            </button>
-          </div>
-          <span className="text-sm font-normal bg-blue-100 text-blue-800 px-3 py-1 rounded-full shadow-sm">
-             現在 {incident.attendance.filter(a => a.status === 'active').length}名 活動中
-          </span>
-        </h3>
-        
-        {sortedMembers.length === 0 && <div className="text-center text-gray-400 py-4">団員が登録されていません</div>}
-
-        {sortedMembers.map(member => {
-          const statusRecord = getMemberStatus(member.id);
-          const isArrived = !!statusRecord;
-          const isReleased = statusRecord?.status === 'released';
-
-          return (
-            <div key={member.id} className={`p-3 rounded-lg border shadow-sm flex justify-between items-center transition-colors ${isArrived ? (isReleased ? 'bg-gray-100 border-gray-200' : 'bg-green-50 border-green-200') : 'bg-white'}`}>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded">
-                    {getRankLabel(member.rank)}
-                  </span>
-                  <span className={`font-bold ${isReleased ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
-                    {member.name}
-                  </span>
-                </div>
-                {isArrived && (
-                  <div className="text-xs text-gray-600 font-mono">
-                    着: {statusRecord.arrivedTime}
-                    {statusRecord.releaseTime && ` - 解: ${statusRecord.releaseTime}`}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                {!isArrived ? (
-                  <button
-                    onClick={() => markAttendance(member, 'arrived')}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow active:bg-blue-700 active:transform active:scale-95 transition-all"
-                  >
-                    現場到着
-                  </button>
-                ) : !isReleased ? (
-                  <div className="flex flex-col gap-1 items-end">
-                    <button
-                      onClick={() => markAttendance(member, 'released')}
-                      className="bg-gray-600 text-white px-3 py-1.5 rounded font-bold text-xs shadow active:bg-gray-700 active:transform active:scale-95 transition-all"
-                    >
-                      部分解除
-                    </button>
-                    <button
-                       onClick={() => markAttendance(member, 'arrived')} 
-                       className="text-blue-600 text-xs underline p-1"
-                    >
-                      時間修正
-                    </button>
-                  </div>
-                ) : (
-                  <span className="text-xs font-bold text-gray-400 px-2">解除済</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-const ReportView = ({ incident, resetIncident }) => {
-  const reportTextRef = useRef(null);
-  const [isConfirming, setIsConfirming] = useState(false);
-
-  const generateReport = () => {
-    let text = `【消防団活動報告】\n`;
-    text += `日付: ${incident.startTime}\n`;
-    text += `種別: ${incident.type === 'hq' ? '本部指令' : '自己覚知'}\n`;
-    text += `場所: ${incident.location || '未入力'}\n`;
-    text += `\n[活動時系列]\n`;
-    incident.logs.forEach(log => {
-      text += `${log.time} ${log.event} ${log.note ? `(${log.note})` : ''}\n`;
-    });
-
-    text += `\n[参加人員・活動時間]\n`;
-    if (incident.attendance.length === 0) text += `記録なし\n`;
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>消防団活動管理・報告アプリ</title>
     
-    // Sort attendance by arrival time
-    const sortedAttendance = [...incident.attendance].sort((a,b) => a.arrivedTime.localeCompare(b.arrivedTime));
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    sortedAttendance.forEach(a => {
-      const rank = RANKS.find(r => r.id === a.rank)?.short || '';
-      text += `${a.arrivedTime}~${a.releaseTime || '活動中'} ${rank} ${a.name}\n`;
-    });
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    return text;
-  };
+    <!-- Babel (JSX Transpiler) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  const copyToClipboard = () => {
-    if (reportTextRef.current) {
-      reportTextRef.current.select();
-      try {
-        document.execCommand('copy');
-        alert('クリップボードにコピーしました');
-      } catch (err) {
-        alert('コピーに失敗しました。手動でコピーしてください。');
-      }
-      window.getSelection().removeAllRanges();
-    }
-  };
-
-  const handleResetClick = () => {
-    if (isConfirming) {
-      resetIncident();
-      setIsConfirming(false);
-    } else {
-      setIsConfirming(true);
-      setTimeout(() => setIsConfirming(false), 3000); // 3秒でキャンセル
-    }
-  };
-
-  return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <div className="flex-1 p-4 pb-24 flex flex-col h-full overflow-hidden">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2 flex-none">
-          <FileText className="w-6 h-6" /> 活動報告書
-        </h2>
-        
-        <div className="flex-1 bg-white p-3 rounded-lg border border-gray-300 mb-4 overflow-hidden shadow-sm relative">
-          <textarea
-            ref={reportTextRef}
-            className="w-full h-full bg-transparent resize-none font-mono text-sm focus:outline-none"
-            readOnly
-            value={generateReport()}
-            onClick={(e) => e.target.select()}
-          />
-        </div>
-
-        <div className="space-y-3 flex-none">
-          <button
-            onClick={copyToClipboard}
-            className="w-full bg-green-600 text-white font-bold p-3 rounded-lg shadow flex justify-center items-center gap-2 hover:bg-green-700 transition-colors"
-          >
-            <Share2 className="w-5 h-5" /> テキストをコピー
-          </button>
-          
-          <button
-            onClick={handleResetClick}
-            className={`w-full font-bold p-3 rounded-lg flex justify-center items-center gap-2 transition-all duration-200 ${isConfirming ? 'bg-red-600 text-white shadow-md scale-105' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-          >
-            {isConfirming ? (
-              <span>本当に消去しますか？(タップして実行)</span>
-            ) : (
-              <>
-                <LogOut className="w-5 h-5" /> 記録をリセットして次へ
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const NavButton = ({ id, label, icon: Icon, alert, active, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`flex flex-col items-center justify-center p-2 w-full transition-colors duration-200 ${active ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-  >
-    <div className="relative">
-      <Icon className={`w-6 h-6 ${active ? 'fill-current' : ''}`} />
-      {alert && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>}
-    </div>
-    <span className="text-[10px] font-bold mt-1">{label}</span>
-  </button>
-);
-
-// --- Main App Component ---
-
-export default function App() {
-  // --- State ---
-  const [activeTab, setActiveTab] = useState('activity'); // activity, members, settings, report
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [showManual, setShowManual] = useState(false); // Manual Modal State
-  
-  // Persistent Data (Settings)
-  const [members, setMembers] = useState(() => {
-    try {
-      const saved = localStorage.getItem('fire_members');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-
-  // Session Data (Current Incident)
-  const [incident, setIncident] = useState(() => {
-    try {
-      const saved = localStorage.getItem('fire_current_incident');
-      return saved ? JSON.parse(saved) : {
-        active: false,
-        type: 'hq',
-        location: '',
-        startTime: '',
-        logs: [],
-        attendance: []
-      };
-    } catch (e) {
-      return {
-        active: false,
-        type: 'hq',
-        location: '',
-        startTime: '',
-        logs: [],
-        attendance: []
-      };
-    }
-  });
-
-  // --- Effects ---
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('fire_members', JSON.stringify(members));
-  }, [members]);
-
-  useEffect(() => {
-    localStorage.setItem('fire_current_incident', JSON.stringify(incident));
-  }, [incident]);
-
-  // --- Actions ---
-  const addMember = (name, rankId) => {
-    const newMember = { id: Date.now().toString(), name, rank: rankId };
-    setMembers([...members, newMember]);
-  };
-
-  const removeMember = (id) => {
-    // 削除確認はUI側で行うため、ここは直接削除のみ
-    setMembers(prev => prev.filter(m => m.id !== id));
-  };
-
-  const startIncident = () => {
-    if (incident.active) return;
-    const nowStr = getFullTimestamp();
-    setIncident({
-      ...incident,
-      active: true,
-      startTime: nowStr,
-      logs: [{ time: getCurrentTimeStr(), event: '活動開始', note: incident.type === 'hq' ? '本部指令' : '自己覚知' }],
-      attendance: []
-    });
-    setActiveTab('activity');
-  };
-
-  const addLog = (event, customNote = '') => {
-    const time = getCurrentTimeStr();
-    setIncident(prev => ({
-      ...prev,
-      logs: [...prev.logs, { time, event, note: customNote }]
-    }));
-  };
-
-  const endIncident = () => {
-    // UI側で確認済み
-    addLog('活動終了', '撤収完了');
-    setIncident(prev => ({ ...prev, active: false }));
-    setActiveTab('report');
-  };
-
-  const resetIncident = () => {
-    // UI側で確認済みのため、ここでは即座に実行
-    setIncident({
-      active: false,
-      type: 'hq',
-      location: '',
-      startTime: '',
-      logs: [],
-      attendance: []
-    });
-    setActiveTab('activity');
-  };
-
-  const markAttendance = (member, status) => {
-    const time = getCurrentTimeStr();
-    setIncident(prev => {
-      const existingIndex = prev.attendance.findIndex(a => a.memberId === member.id);
-      let newAttendance = [...prev.attendance];
-
-      if (status === 'arrived') {
-        if (existingIndex >= 0) {
-          newAttendance[existingIndex] = { ...newAttendance[existingIndex], arrivedTime: time, status: 'active' };
-        } else {
-          newAttendance.push({
-            memberId: member.id,
-            name: member.name,
-            rank: member.rank,
-            arrivedTime: time,
-            releaseTime: null,
-            status: 'active'
-          });
+    <style>
+        /* モバイル用調整 */
+        body {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
-        addLog('隊員合流', `${RANKS.find(r => r.id === member.rank)?.short} ${member.name}`);
-      } else if (status === 'released') {
-        if (existingIndex >= 0) {
-          newAttendance[existingIndex] = { ...newAttendance[existingIndex], releaseTime: time, status: 'released' };
+        .pb-safe { 
+            padding-bottom: env(safe-area-inset-bottom); 
         }
-      }
-
-      return { ...prev, attendance: newAttendance };
-    });
-  };
-
-  return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-50 shadow-2xl overflow-hidden font-sans relative">
-      <div className="flex-1 overflow-hidden relative">
-        {activeTab === 'activity' && (
-          <ActivityView 
-            incident={incident} 
-            setIncident={setIncident} 
-            startIncident={startIncident} 
-            addLog={addLog} 
-            endIncident={endIncident}
-            currentTime={currentTime}
-            onShowManual={() => setShowManual(true)}
-          />
-        )}
-        {activeTab === 'members' && (
-          <MembersAttendanceView 
-            incident={incident} 
-            members={members} 
-            markAttendance={markAttendance} 
-            onShowManual={() => setShowManual(true)}
-          />
-        )}
-        {activeTab === 'report' && (
-          <ReportView 
-            incident={incident} 
-            resetIncident={resetIncident} 
-          />
-        )}
-        {activeTab === 'settings' && (
-          <SettingsView 
-            members={members} 
-            addMember={addMember} 
-            removeMember={removeMember} 
-          />
-        )}
-      </div>
-
-      <div className="bg-white border-t border-gray-200 h-16 flex justify-around items-center shrink-0 z-20 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-        <NavButton 
-          id="activity" 
-          label="活動記録" 
-          icon={Clock} 
-          alert={incident.active} 
-          active={activeTab === 'activity'}
-          onClick={() => setActiveTab('activity')}
-        />
-        <NavButton 
-          id="members" 
-          label="隊員管理" 
-          icon={Users} 
-          alert={false} 
-          active={activeTab === 'members'}
-          onClick={() => setActiveTab('members')}
-        />
-        <NavButton 
-          id="report" 
-          label="報告・出力" 
-          icon={FileText} 
-          alert={false} 
-          active={activeTab === 'report'}
-          onClick={() => setActiveTab('report')}
-        />
-        <NavButton 
-          id="settings" 
-          label="設定" 
-          icon={Settings} 
-          alert={false} 
-          active={activeTab === 'settings'}
-          onClick={() => setActiveTab('settings')}
-        />
-      </div>
-      
-      {/* Manual Modal */}
-      {showManual && <ManualModal onClose={() => setShowManual(false)} />}
-      
-      <style>{`
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        /* モバイルSafariでの100vh問題対策 */
         @supports (-webkit-touch-callout: none) {
-          .h-screen {
-            height: -webkit-fill-available;
-          }
+            .h-screen {
+                height: -webkit-fill-available;
+            }
         }
-      `}</style>
-    </div>
-  );
-}
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- アイコンコンポーネント (依存関係排除のためインライン化) ---
+        const IconBase = ({ children, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+
+        const Clock = ({ className }) => <IconBase className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>;
+        const Users = ({ className }) => <IconBase className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></IconBase>;
+        const FileText = ({ className }) => <IconBase className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></IconBase>;
+        const Settings = ({ className }) => <IconBase className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>;
+        const Plus = ({ className }) => <IconBase className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></IconBase>;
+        const Trash2 = ({ className }) => <IconBase className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></IconBase>;
+        const Share2 = ({ className }) => <IconBase className={className}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></IconBase>;
+        const AlertTriangle = ({ className }) => <IconBase className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></IconBase>;
+        const Play = ({ className }) => <IconBase className={className}><polygon points="5 3 19 12 5 21 5 3"/></IconBase>;
+        const MapPin = ({ className }) => <IconBase className={className}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></IconBase>;
+        const Droplets = ({ className }) => <IconBase className={className}><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.8-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></IconBase>;
+        const LogOut = ({ className }) => <IconBase className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></IconBase>;
+        const CheckCircle = ({ className }) => <IconBase className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>;
+        const HelpCircle = ({ className }) => <IconBase className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></IconBase>;
+        const X = ({ className }) => <IconBase className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconBase>;
+        const ChevronRight = ({ className }) => <IconBase className={className}><polyline points="9 18 15 12 9 6"/></IconBase>;
+        const ChevronLeft = ({ className }) => <IconBase className={className}><polyline points="15 18 9 12 15 6"/></IconBase>;
+
+
+        // --- ここからアプリのロジック ---
+
+        // Rank definitions
+        const RANKS = [
+            { id: 'dancho', label: '団長', short: '団長' },
+            { id: 'fukudancho', label: '副団長', short: '副団' },
+            { id: 'bundancho', label: '分団長', short: '分団' },
+            { id: 'fukubundancho', label: '副分団長', short: '副分' },
+            { id: 'bucho', label: '部長', short: '部長' },
+            { id: 'hancho', label: '班長', short: '班長' },
+            { id: 'danin', label: '団員', short: '団員' },
+        ];
+
+        // Utility to get formatted time string HH:MM
+        const getCurrentTimeStr = () => {
+            const now = new Date();
+            return now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        };
+
+        // Utility to get full timestamp
+        const getFullTimestamp = () => {
+            const now = new Date();
+            return `${now.getMonth() + 1}/${now.getDate()} ${now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`;
+        };
+
+        // --- Manual Animation Components ---
+        const ManualSlide1 = () => (
+            <div className="flex flex-col items-center">
+                <div className="w-48 h-32 bg-gray-100 rounded-lg relative overflow-hidden border border-gray-300 mb-4 flex justify-center items-center">
+                    <svg width="100%" height="100%" viewBox="0 0 200 120">
+                        <rect x="20" y="20" width="160" height="20" rx="4" fill="white" stroke="#e5e7eb" />
+                        <rect x="20" y="50" width="160" height="20" rx="4" fill="white" stroke="#e5e7eb" />
+                        <circle cx="170" cy="100" r="15" fill="#2563EB" />
+                        <path d="M165,100 L175,100 M170,95 L170,105" stroke="white" strokeWidth="3" />
+                        <g>
+                            <path d="M160,110 L180,110 L170,90 Z" fill="rgba(255,255,255,0.5)" className="animate-ping" style={{ animationDuration: '2s' }} />
+                            <circle cx="170" cy="100" r="5" fill="orange" className="animate-ping" />
+                        </g>
+                    </svg>
+                </div>
+                <h3 className="font-bold text-lg mb-2">1. 事前の団員登録</h3>
+                <p className="text-sm text-gray-600 text-center">
+                    まずは「設定」タブから、分団のメンバーを登録しておきましょう。一度登録すれば次回以降も使えます。
+                </p>
+            </div>
+        );
+
+        const ManualSlide2 = () => (
+            <div className="flex flex-col items-center">
+                <div className="w-48 h-32 bg-gray-100 rounded-lg relative overflow-hidden border border-gray-300 mb-4 flex justify-center items-center">
+                    <svg width="100%" height="100%" viewBox="0 0 200 120">
+                        <rect x="20" y="20" width="160" height="30" rx="4" fill="white" stroke="#e5e7eb" />
+                        <text x="30" y="40" fontSize="10" fill="#9ca3af">場所を入力...</text>
+                        <rect x="40" y="70" width="120" height="30" rx="15" fill="#DC2626" className="animate-pulse" />
+                        <text x="100" y="89" fontSize="12" fill="white" textAnchor="middle" fontWeight="bold">出動開始</text>
+                    </svg>
+                </div>
+                <h3 className="font-bold text-lg mb-2">2. 出動開始</h3>
+                <p className="text-sm text-gray-600 text-center">
+                    火災が発生したら「活動記録」タブへ。「本部指令」か「自己覚知」かを選び、場所を入れて「出動開始」を押します。
+                </p>
+            </div>
+        );
+
+        const ManualSlide3 = () => (
+            <div className="flex flex-col items-center">
+                <div className="w-48 h-32 bg-gray-100 rounded-lg relative overflow-hidden border border-gray-300 mb-4 flex justify-center items-center">
+                    <svg width="100%" height="100%" viewBox="0 0 200 120">
+                        <rect x="20" y="40" width="160" height="40" rx="4" fill="white" stroke="#e5e7eb" />
+                        <text x="30" y="65" fontSize="12" fill="#374151">団員A</text>
+                        <rect x="120" y="48" width="50" height="24" rx="4" fill="#2563EB">
+                            <animate attributeName="fill" values="#2563EB;#16A34A;#2563EB" dur="3s" repeatCount="indefinite" />
+                        </rect>
+                        <text x="145" y="64" fontSize="10" fill="white" textAnchor="middle">現場到着</text>
+                        <circle cx="145" cy="60" r="10" fill="orange" opacity="0.5" className="animate-ping" />
+                    </svg>
+                </div>
+                <h3 className="font-bold text-lg mb-2">3. 隊員管理（重要）</h3>
+                <p className="text-sm text-gray-600 text-center">
+                    遅れて来た団員がいたら、「隊員管理」タブでその人の<b>「現場到着」</b>ボタンを押します。これで正確な活動時間を記録できます。
+                </p>
+            </div>
+        );
+
+        const ManualSlide4 = () => (
+            <div className="flex flex-col items-center">
+                <div className="w-48 h-32 bg-gray-100 rounded-lg relative overflow-hidden border border-gray-300 mb-4 flex justify-center items-center">
+                    <svg width="100%" height="100%" viewBox="0 0 200 120">
+                        <rect x="50" y="10" width="100" height="100" rx="2" fill="white" stroke="#e5e7eb" />
+                        <line x1="60" y1="30" x2="140" y2="30" stroke="#d1d5db" strokeWidth="2" />
+                        <line x1="60" y1="45" x2="140" y2="45" stroke="#d1d5db" strokeWidth="2" />
+                        <line x1="60" y1="60" x2="120" y2="60" stroke="#d1d5db" strokeWidth="2" />
+                        <rect x="40" y="80" width="120" height="30" rx="4" fill="#16A34A" />
+                        <text x="100" y="99" fontSize="12" fill="white" textAnchor="middle" fontWeight="bold">テキストをコピー</text>
+                        <path d="M90,50 L95,55 L105,45" fill="none" stroke="#16A34A" strokeWidth="3" strokeDasharray="20" strokeDashoffset="20">
+                            <animate attributeName="stroke-dashoffset" to="0" dur="1s" fill="freeze" repeatCount="indefinite" />
+                        </path>
+                    </svg>
+                </div>
+                <h3 className="font-bold text-lg mb-2">4. 報告書の作成</h3>
+                <p className="text-sm text-gray-600 text-center">
+                    活動が終わったら「活動終了」を押し、「報告・出力」タブへ。自動作成された日報をコピーして、LINEなどで報告できます。
+                </p>
+            </div>
+        );
+
+        const ManualModal = ({ onClose }) => {
+            const [step, setStep] = useState(0);
+            const slides = [
+                <ManualSlide1 />,
+                <ManualSlide2 />,
+                <ManualSlide3 />,
+                <ManualSlide4 />
+            ];
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-sm rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-4 border-b flex justify-between items-center bg-blue-50">
+                            <h2 className="font-bold text-blue-900 flex items-center gap-2">
+                                <HelpCircle className="w-5 h-5" /> 取扱マニュアル
+                            </h2>
+                            <button onClick={onClose} className="p-1 rounded-full hover:bg-blue-100 text-blue-900">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 p-6 flex flex-col items-center justify-center">
+                            {slides[step]}
+                        </div>
+
+                        <div className="p-4 border-t bg-gray-50 flex justify-between items-center">
+                            <button 
+                                onClick={() => setStep(Math.max(0, step - 1))}
+                                disabled={step === 0}
+                                className={`p-2 rounded flex items-center gap-1 font-bold ${step === 0 ? 'text-gray-300' : 'text-blue-600 hover:bg-blue-100'}`}
+                            >
+                                <ChevronLeft className="w-5 h-5" /> 前へ
+                            </button>
+                            
+                            <div className="flex gap-1">
+                                {slides.map((_, i) => (
+                                    <div key={i} className={`w-2 h-2 rounded-full ${i === step ? 'bg-blue-600' : 'bg-gray-300'}`} />
+                                ))}
+                            </div>
+
+                            <button 
+                                onClick={() => {
+                                    if (step < slides.length - 1) {
+                                        setStep(step + 1);
+                                    } else {
+                                        onClose();
+                                    }
+                                }}
+                                className="p-2 rounded flex items-center gap-1 font-bold text-blue-600 hover:bg-blue-100"
+                            >
+                                {step === slides.length - 1 ? '閉じる' : '次へ'} <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Sub Components ---
+
+        const SettingsView = ({ members, addMember, removeMember }) => {
+            const [newName, setNewName] = useState('');
+            const [newRank, setNewRank] = useState('danin');
+            const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+
+            const getRankLabel = (rankId) => RANKS.find(r => r.id === rankId)?.label || rankId;
+
+            const handleDeleteClick = (id) => {
+                if (deleteConfirmId === id) {
+                    removeMember(id);
+                    setDeleteConfirmId(null);
+                } else {
+                    setDeleteConfirmId(id);
+                    setTimeout(() => setDeleteConfirmId(null), 3000);
+                }
+            };
+
+            return (
+                <div className="flex flex-col h-full bg-gray-50">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-24">
+                        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <Users className="w-5 h-5 mr-2" /> 団員名簿登録
+                            </h3>
+                            <div className="flex flex-col gap-3">
+                                <input
+                                    type="text"
+                                    placeholder="氏名 (例: 消防 太郎)"
+                                    className="border p-3 rounded text-lg"
+                                    value={newName}
+                                    onChange={e => setNewName(e.target.value)}
+                                />
+                                <select
+                                    className="border p-3 rounded text-lg bg-white"
+                                    value={newRank}
+                                    onChange={e => setNewRank(e.target.value)}
+                                >
+                                    {RANKS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                                </select>
+                                <button
+                                    onClick={() => {
+                                        if (newName) {
+                                            addMember(newName, newRank);
+                                            setNewName('');
+                                        }
+                                    }}
+                                    className="bg-blue-600 text-white p-3 rounded font-bold flex justify-center items-center gap-2 hover:bg-blue-700 active:bg-blue-800 transition"
+                                >
+                                    <Plus className="w-5 h-5" /> 追加する
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                            <h3 className="text-sm font-semibold text-gray-500 mb-2">登録済み団員 ({members.length}名)</h3>
+                            <div className="divide-y">
+                                {members.length === 0 && <p className="text-gray-400 py-2">登録された団員がいません</p>}
+                                {members.map(m => (
+                                    <div key={m.id} className="py-3 flex justify-between items-center">
+                                        <div>
+                                            <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded mr-2">
+                                                {getRankLabel(m.rank)}
+                                            </span>
+                                            <span className="font-medium text-lg">{m.name}</span>
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={() => handleDeleteClick(m.id)}
+                                            className={`p-2 rounded flex items-center transition-all duration-200 ${
+                                                deleteConfirmId === m.id 
+                                                ? 'bg-red-600 text-white px-3' 
+                                                : 'text-red-500 hover:bg-red-50'
+                                            }`}
+                                        >
+                                            {deleteConfirmId === m.id ? (
+                                                <span className="text-xs font-bold whitespace-nowrap">削除確定</span>
+                                            ) : (
+                                                <Trash2 className="w-5 h-5" />
+                                            )}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ActivityView = ({ incident, setIncident, startIncident, addLog, endIncident, currentTime, onShowManual }) => {
+            const [customLogText, setCustomLogText] = useState('');
+            const [isEnding, setIsEnding] = useState(false);
+
+            const handleEndClick = () => {
+                if (isEnding) {
+                    endIncident();
+                    setIsEnding(false);
+                } else {
+                    setIsEnding(true);
+                    setTimeout(() => setIsEnding(false), 3000);
+                }
+            };
+
+            const Header = () => (
+                <div className="flex-none bg-red-50 border-b border-red-100 p-3 flex justify-between items-center shadow-sm z-10">
+                    <div className="min-w-0 flex-1 mr-2">
+                        {incident.active ? (
+                            <React.Fragment>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${incident.type === 'hq' ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'}`}>
+                                        {incident.type === 'hq' ? '指令' : '覚知'}
+                                    </span>
+                                    <span className="font-bold text-gray-800 text-sm whitespace-nowrap">
+                                        {incident.startTime.split(' ')[1]}~
+                                    </span>
+                                </div>
+                                <div className="text-sm text-gray-600 truncate font-medium">{incident.location || '場所未入力'}</div>
+                            </React.Fragment>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-gray-800">活動記録</span>
+                                <button onClick={onShowManual} className="text-blue-600 bg-blue-50 px-2 py-1 rounded-full text-xs flex items-center gap-1 border border-blue-200">
+                                    <HelpCircle className="w-3 h-3" /> 使い方
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    <div className="text-right flex-none flex items-center gap-3">
+                        <div>
+                            <div className="text-2xl font-mono font-bold text-gray-900 leading-none tracking-tight">
+                                {currentTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            {incident.active && <div className="text-xs text-red-600 animate-pulse font-bold mt-1 text-right">活動中</div>}
+                        </div>
+                        {incident.active && (
+                            <button onClick={onShowManual} className="text-gray-400 hover:text-blue-600">
+                                <HelpCircle className="w-6 h-6" />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+
+            if (!incident.active) {
+                return (
+                    <div className="flex flex-col h-full bg-gray-50">
+                        <Header />
+                        <div className="flex-1 flex flex-col justify-center items-center p-6 space-y-8">
+                            <div className="text-center space-y-2">
+                                <h2 className="text-2xl font-bold text-gray-800">出動待機中</h2>
+                                <p className="text-gray-500">事案が発生したらボタンを押してください</p>
+                            </div>
+
+                            <div className="w-full max-w-sm space-y-4">
+                                <div className="bg-white p-4 rounded-lg shadow-sm border space-y-3">
+                                    <label className="block text-sm font-bold text-gray-700">覚知形態</label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setIncident({ ...incident, type: 'hq' })}
+                                            className={`flex-1 p-3 rounded font-bold ${incident.type === 'hq' ? 'bg-red-100 text-red-700 border-2 border-red-500' : 'bg-gray-50 text-gray-500 border'}`}
+                                        >
+                                            本部指令
+                                        </button>
+                                        <button
+                                            onClick={() => setIncident({ ...incident, type: 'self' })}
+                                            className={`flex-1 p-3 rounded font-bold ${incident.type === 'self' ? 'bg-orange-100 text-orange-700 border-2 border-orange-500' : 'bg-gray-50 text-gray-500 border'}`}
+                                        >
+                                            自己覚知
+                                        </button>
+                                    </div>
+                                    
+                                    <label className="block text-sm font-bold text-gray-700 mt-2">出動場所・目標</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="例: 〇〇町1丁目付近" 
+                                        className="w-full p-3 border rounded text-lg"
+                                        value={incident.location}
+                                        onChange={(e) => setIncident({...incident, location: e.target.value})}
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={startIncident}
+                                    className="w-full bg-red-600 text-white text-xl font-bold p-6 rounded-xl shadow-lg hover:bg-red-700 active:transform active:scale-95 transition flex items-center justify-center gap-3"
+                                >
+                                    <AlertTriangle className="w-8 h-8" />
+                                    出動開始
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="flex flex-col h-full bg-gray-50">
+                    <Header />
+
+                    {/* Scrollable Content */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-24">
+                        {/* Quick Actions */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={() => addLog('現場到着')} className="bg-blue-600 text-white p-4 rounded-lg font-bold shadow active:bg-blue-700 flex flex-col items-center gap-1 transition-colors">
+                                <MapPin className="w-6 h-6" /> 現着
+                            </button>
+                            <button onClick={() => addLog('水利部署')} className="bg-cyan-600 text-white p-4 rounded-lg font-bold shadow active:bg-cyan-700 flex flex-col items-center gap-1 transition-colors">
+                                <Droplets className="w-6 h-6" /> 水利部署
+                            </button>
+                            <button onClick={() => addLog('放水開始')} className="bg-indigo-600 text-white p-4 rounded-lg font-bold shadow active:bg-indigo-700 flex flex-col items-center gap-1 transition-colors">
+                                <Play className="w-6 h-6" /> 放水開始
+                            </button>
+                            <button onClick={() => addLog('鎮圧/放水停止')} className="bg-green-600 text-white p-4 rounded-lg font-bold shadow active:bg-green-700 flex flex-col items-center gap-1 transition-colors">
+                                <CheckCircle className="w-6 h-6" /> 鎮圧・停止
+                            </button>
+                        </div>
+
+                        {/* Custom Log */}
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                className="flex-1 border border-gray-300 p-3 rounded-lg shadow-sm" 
+                                placeholder="その他の活動メモ..." 
+                                value={customLogText}
+                                onChange={(e) => setCustomLogText(e.target.value)}
+                            />
+                            <button 
+                                onClick={() => { if(customLogText) { addLog('メモ', customLogText); setCustomLogText(''); }}}
+                                className="bg-gray-700 text-white px-5 rounded-lg font-bold shadow active:bg-gray-800 whitespace-nowrap"
+                            >
+                                記録
+                            </button>
+                        </div>
+
+                        {/* Recent Logs Preview */}
+                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                                <Clock className="w-3 h-3" /> 直近の記録
+                            </div>
+                            <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
+                                {incident.logs && incident.logs.length > 0 ? (
+                                    incident.logs.slice().reverse().map((log, i) => (
+                                        <div key={i} className="px-3 py-2.5 text-sm flex gap-3 items-start hover:bg-gray-50">
+                                            <span className="font-mono text-gray-500 whitespace-nowrap mt-0.5">{log.time}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <span className="font-bold text-gray-800 mr-2">{log.event}</span>
+                                                <span className="text-gray-600 break-all">{log.note}</span>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-gray-400 text-sm">記録はまだありません</div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="pt-4">
+                            <button 
+                                onClick={handleEndClick} 
+                                className={`w-full border-2 font-bold p-3 rounded-lg shadow-sm transition-all duration-200 ${isEnding ? 'bg-red-600 text-white border-red-600 scale-105' : 'bg-white text-red-600 border-red-600 hover:bg-red-50'}`}
+                            >
+                                {isEnding ? '本当に終了しますか？(タップして確定)' : '活動終了・報告作成へ'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const MembersAttendanceView = ({ incident, members, markAttendance, onShowManual }) => {
+            if (!incident.active) return <div className="p-8 text-center text-gray-500 mt-10">出動中でないため記録できません。</div>;
+
+            const getRankLabel = (rankId) => RANKS.find(r => r.id === rankId)?.label || rankId;
+
+            const getMemberStatus = (id) => incident.attendance.find(a => a.memberId === id);
+            
+            const sortedMembers = [...members].sort((a, b) => {
+                const rankOrder = ['dancho', 'fukudancho', 'bundancho', 'fukubundancho', 'bucho', 'hancho', 'danin'];
+                return rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
+            });
+
+            return (
+                <div className="flex flex-col h-full bg-gray-50">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
+                        <h3 className="text-lg font-bold mb-2 flex items-center justify-between sticky top-0 bg-gray-50 py-2 z-10">
+                            <div className="flex items-center gap-2">
+                                <span>隊員・時間管理</span>
+                                <button onClick={onShowManual} className="text-blue-500 hover:text-blue-700">
+                                    <HelpCircle className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <span className="text-sm font-normal bg-blue-100 text-blue-800 px-3 py-1 rounded-full shadow-sm">
+                                現在 {incident.attendance.filter(a => a.status === 'active').length}名 活動中
+                            </span>
+                        </h3>
+                        
+                        {sortedMembers.length === 0 && <div className="text-center text-gray-400 py-4">団員が登録されていません</div>}
+
+                        {sortedMembers.map(member => {
+                            const statusRecord = getMemberStatus(member.id);
+                            const isArrived = !!statusRecord;
+                            const isReleased = statusRecord?.status === 'released';
+
+                            return (
+                                <div key={member.id} className={`p-3 rounded-lg border shadow-sm flex justify-between items-center transition-colors ${isArrived ? (isReleased ? 'bg-gray-100 border-gray-200' : 'bg-green-50 border-green-200') : 'bg-white'}`}>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded">
+                                                {getRankLabel(member.rank)}
+                                            </span>
+                                            <span className={`font-bold ${isReleased ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
+                                                {member.name}
+                                            </span>
+                                        </div>
+                                        {isArrived && (
+                                            <div className="text-xs text-gray-600 font-mono">
+                                                着: {statusRecord.arrivedTime}
+                                                {statusRecord.releaseTime && ` - 解: ${statusRecord.releaseTime}`}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        {!isArrived ? (
+                                            <button
+                                                onClick={() => markAttendance(member, 'arrived')}
+                                                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow active:bg-blue-700 active:transform active:scale-95 transition-all"
+                                            >
+                                                現場到着
+                                            </button>
+                                        ) : !isReleased ? (
+                                            <div className="flex flex-col gap-1 items-end">
+                                                <button
+                                                    onClick={() => markAttendance(member, 'released')}
+                                                    className="bg-gray-600 text-white px-3 py-1.5 rounded font-bold text-xs shadow active:bg-gray-700 active:transform active:scale-95 transition-all"
+                                                >
+                                                    部分解除
+                                                </button>
+                                                <button
+                                                    onClick={() => markAttendance(member, 'arrived')} 
+                                                    className="text-blue-600 text-xs underline p-1"
+                                                >
+                                                    時間修正
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs font-bold text-gray-400 px-2">解除済</span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        const ReportView = ({ incident, resetIncident }) => {
+            const reportTextRef = useRef(null);
+            const [isConfirming, setIsConfirming] = useState(false);
+
+            const generateReport = () => {
+                // Fixed: Use simple string concatenation instead of nested template literals
+                let text = '【消防団活動報告】\n';
+                text += '日付: ' + incident.startTime + '\n';
+                text += '種別: ' + (incident.type === 'hq' ? '本部指令' : '自己覚知') + '\n';
+                text += '場所: ' + (incident.location || '未入力') + '\n';
+                text += '\n[活動時系列]\n';
+                incident.logs.forEach(log => {
+                    text += log.time + ' ' + log.event + ' ' + (log.note ? '(' + log.note + ')' : '') + '\n';
+                });
+
+                text += '\n[参加人員・活動時間]\n';
+                if (incident.attendance.length === 0) text += '記録なし\n';
+                
+                const sortedAttendance = [...incident.attendance].sort((a,b) => a.arrivedTime.localeCompare(b.arrivedTime));
+                
+                sortedAttendance.forEach(a => {
+                    const rank = RANKS.find(r => r.id === a.rank)?.short || '';
+                    text += a.arrivedTime + '~' + (a.releaseTime || '活動中') + ' ' + rank + ' ' + a.name + '\n';
+                });
+                
+                return text;
+            };
+
+            const copyToClipboard = () => {
+                if (reportTextRef.current) {
+                    reportTextRef.current.select();
+                    try {
+                        document.execCommand('copy');
+                        alert('クリップボードにコピーしました');
+                    } catch (err) {
+                        alert('コピーに失敗しました。手動でコピーしてください。');
+                    }
+                    window.getSelection().removeAllRanges();
+                }
+            };
+
+            const handleResetClick = () => {
+                if (isConfirming) {
+                    resetIncident();
+                    setIsConfirming(false);
+                } else {
+                    setIsConfirming(true);
+                    setTimeout(() => setIsConfirming(false), 3000);
+                }
+            };
+
+            return (
+                <div className="flex flex-col h-full bg-gray-50">
+                    <div className="flex-1 p-4 pb-24 flex flex-col h-full overflow-hidden">
+                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2 flex-none">
+                            <FileText className="w-6 h-6" /> 活動報告書
+                        </h2>
+                        
+                        <div className="flex-1 bg-white p-3 rounded-lg border border-gray-300 mb-4 overflow-hidden shadow-sm relative">
+                            <textarea
+                                ref={reportTextRef}
+                                className="w-full h-full bg-transparent resize-none font-mono text-sm focus:outline-none"
+                                readOnly
+                                value={generateReport()}
+                                onClick={(e) => e.target.select()}
+                            />
+                        </div>
+
+                        <div className="space-y-3 flex-none">
+                            <button
+                                onClick={copyToClipboard}
+                                className="w-full bg-green-600 text-white font-bold p-3 rounded-lg shadow flex justify-center items-center gap-2 hover:bg-green-700 transition-colors"
+                            >
+                                <Share2 className="w-5 h-5" /> テキストをコピー
+                            </button>
+                            
+                            <button
+                                onClick={handleResetClick}
+                                className={`w-full font-bold p-3 rounded-lg flex justify-center items-center gap-2 transition-all duration-200 ${isConfirming ? 'bg-red-600 text-white shadow-md scale-105' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                            >
+                                {isConfirming ? (
+                                    <span>本当に消去しますか？(タップして実行)</span>
+                                ) : (
+                                    <React.Fragment>
+                                        <LogOut className="w-5 h-5" /> 記録をリセットして次へ
+                                    </React.Fragment>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const NavButton = ({ id, label, icon: Icon, alert, active, onClick }) => (
+            <button
+                onClick={onClick}
+                className={`flex flex-col items-center justify-center p-2 w-full transition-colors duration-200 ${active ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+                <div className="relative">
+                    <Icon className={`w-6 h-6 ${active ? 'fill-current' : ''}`} />
+                    {alert && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>}
+                </div>
+                <span className="text-[10px] font-bold mt-1">{label}</span>
+            </button>
+        );
+
+        // --- Main App Component ---
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('activity');
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [showManual, setShowManual] = useState(false);
+            
+            // Persistent Data
+            const [members, setMembers] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('fire_members');
+                    return saved ? JSON.parse(saved) : [];
+                } catch (e) {
+                    return [];
+                }
+            });
+
+            // Session Data
+            const [incident, setIncident] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('fire_current_incident');
+                    return saved ? JSON.parse(saved) : {
+                        active: false,
+                        type: 'hq',
+                        location: '',
+                        startTime: '',
+                        logs: [],
+                        attendance: []
+                    };
+                } catch (e) {
+                    return {
+                        active: false,
+                        type: 'hq',
+                        location: '',
+                        startTime: '',
+                        logs: [],
+                        attendance: []
+                    };
+                }
+            });
+
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('fire_members', JSON.stringify(members));
+            }, [members]);
+
+            useEffect(() => {
+                localStorage.setItem('fire_current_incident', JSON.stringify(incident));
+            }, [incident]);
+
+            const addMember = (name, rankId) => {
+                const newMember = { id: Date.now().toString(), name, rank: rankId };
+                setMembers([...members, newMember]);
+            };
+
+            const removeMember = (id) => {
+                setMembers(prev => prev.filter(m => m.id !== id));
+            };
+
+            const startIncident = () => {
+                if (incident.active) return;
+                const nowStr = getFullTimestamp();
+                setIncident({
+                    ...incident,
+                    active: true,
+                    startTime: nowStr,
+                    logs: [{ time: getCurrentTimeStr(), event: '活動開始', note: incident.type === 'hq' ? '本部指令' : '自己覚知' }],
+                    attendance: []
+                });
+                setActiveTab('activity');
+            };
+
+            const addLog = (event, customNote = '') => {
+                const time = getCurrentTimeStr();
+                setIncident(prev => ({
+                    ...prev,
+                    logs: [...prev.logs, { time, event, note: customNote }]
+                }));
+            };
+
+            const endIncident = () => {
+                addLog('活動終了', '撤収完了');
+                setIncident(prev => ({ ...prev, active: false }));
+                setActiveTab('report');
+            };
+
+            const resetIncident = () => {
+                setIncident({
+                    active: false,
+                    type: 'hq',
+                    location: '',
+                    startTime: '',
+                    logs: [],
+                    attendance: []
+                });
+                setActiveTab('activity');
+            };
+
+            const markAttendance = (member, status) => {
+                const time = getCurrentTimeStr();
+                setIncident(prev => {
+                    const existingIndex = prev.attendance.findIndex(a => a.memberId === member.id);
+                    let newAttendance = [...prev.attendance];
+
+                    if (status === 'arrived') {
+                        if (existingIndex >= 0) {
+                            newAttendance[existingIndex] = { ...newAttendance[existingIndex], arrivedTime: time, status: 'active' };
+                        } else {
+                            newAttendance.push({
+                                memberId: member.id,
+                                name: member.name,
+                                rank: member.rank,
+                                arrivedTime: time,
+                                releaseTime: null,
+                                status: 'active'
+                            });
+                        }
+                        addLog('隊員合流', `${RANKS.find(r => r.id === member.rank)?.short} ${member.name}`);
+                    } else if (status === 'released') {
+                        if (existingIndex >= 0) {
+                            newAttendance[existingIndex] = { ...newAttendance[existingIndex], releaseTime: time, status: 'released' };
+                        }
+                    }
+
+                    return { ...prev, attendance: newAttendance };
+                });
+            };
+
+            return (
+                <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-50 shadow-2xl overflow-hidden font-sans relative">
+                    <div className="flex-1 overflow-hidden relative">
+                        {activeTab === 'activity' && (
+                            <ActivityView 
+                                incident={incident} 
+                                setIncident={setIncident} 
+                                startIncident={startIncident} 
+                                addLog={addLog} 
+                                endIncident={endIncident}
+                                currentTime={currentTime}
+                                onShowManual={() => setShowManual(true)}
+                            />
+                        )}
+                        {activeTab === 'members' && (
+                            <MembersAttendanceView 
+                                incident={incident} 
+                                members={members} 
+                                markAttendance={markAttendance} 
+                                onShowManual={() => setShowManual(true)}
+                            />
+                        )}
+                        {activeTab === 'report' && (
+                            <ReportView 
+                                incident={incident} 
+                                resetIncident={resetIncident} 
+                            />
+                        )}
+                        {activeTab === 'settings' && (
+                            <SettingsView 
+                                members={members} 
+                                addMember={addMember} 
+                                removeMember={removeMember} 
+                            />
+                        )}
+                    </div>
+
+                    <div className="bg-white border-t border-gray-200 h-16 flex justify-around items-center shrink-0 z-20 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                        <NavButton 
+                            id="activity" 
+                            label="活動記録" 
+                            icon={Clock} 
+                            alert={incident.active} 
+                            active={activeTab === 'activity'}
+                            onClick={() => setActiveTab('activity')}
+                        />
+                        <NavButton 
+                            id="members" 
+                            label="隊員管理" 
+                            icon={Users} 
+                            alert={false} 
+                            active={activeTab === 'members'}
+                            onClick={() => setActiveTab('members')}
+                        />
+                        <NavButton 
+                            id="report" 
+                            label="報告・出力" 
+                            icon={FileText} 
+                            alert={false} 
+                            active={activeTab === 'report'}
+                            onClick={() => setActiveTab('report')}
+                        />
+                        <NavButton 
+                            id="settings" 
+                            label="設定" 
+                            icon={Settings} 
+                            alert={false} 
+                            active={activeTab === 'settings'}
+                            onClick={() => setActiveTab('settings')}
+                        />
+                    </div>
+                    
+                    {showManual && <ManualModal onClose={() => setShowManual(false)} />}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
