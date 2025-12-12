@@ -135,7 +135,7 @@
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 10</div>
-      <div class="lesson-desc">水難救助</div>
+      <div class="lesson-desc">津波の歴史と学習</div>
       <a href="lesson10/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
