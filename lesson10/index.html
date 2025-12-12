@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>南海トラフ地震・津波防災 e-Learning</title>
+    <!-- フォント: Noto Sans JP を使用して可読性と高級感を確保 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* カラーパレット: 信頼と格式のネイビー＆ゴールド */
+            --primary-color: #1a237e; /* 濃紺 */
+            --primary-light: #534bae;
+            --primary-dark: #000051;
+            --secondary-color: #c5a059; /* シャンパンゴールド */
+            --accent-color: #d32f2f; /* 警告・不正解用の赤 */
+            --success-color: #2e7d32; /* 正解用の緑 */
+            --bg-color: #f5f5f7; /* 薄いグレーの背景 */
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #666666;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* カードデザイン */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border-top: 6px solid var(--primary-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+            line-height: 1.4;
+        }
+
+        h2 {
+            font-size: 16px;
+            color: var(--text-light);
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 20px;
+            letter-spacing: 0.1em;
+            font-weight: 500;
+        }
+
+        /* ボタンデザイン */
+        .btn {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 16px 40px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
+            letter-spacing: 0.05em;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26, 35, 126, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* 問題画面 */
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: left;
+            color: var(--primary-dark);
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 15px;
+            text-align: left;
+        }
+
+        .option-btn {
+            background-color: #fff;
+            border: 2px solid #e0e0e0;
+            padding: 18px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            position: relative;
+            color: var(--text-main);
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary-color);
+            background-color: #f0f4ff;
+        }
+
+        /* 正解・不正解の状態 */
+        .option-btn.correct {
+            border-color: var(--success-color);
+            background-color: #e8f5e9;
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .option-btn.correct::after {
+            content: '✓';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+        }
+
+        .option-btn.incorrect {
+            border-color: var(--accent-color);
+            background-color: #ffebee;
+            color: var(--accent-color);
+            opacity: 0.8;
+        }
+        
+        .option-btn.incorrect::after {
+            content: '✕';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        /* 解説エリア */
+        .feedback-area {
+            margin-top: 25px;
+            padding: 25px;
+            background-color: #f8f9fa;
+            border-left: 5px solid var(--secondary-color);
+            text-align: left;
+            display: none; /* 初期状態は非表示 */
+            animation: fadeIn 0.5s ease;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .feedback-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .feedback-text {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-main);
+        }
+
+        .next-btn-container {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        /* TOPへ戻るボタン（絶対配置） */
+        .home-btn-absolute {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 13px;
+            color: var(--text-light);
+            background: none;
+            border: 1px solid transparent;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: inherit;
+        }
+
+        .home-btn-absolute:hover {
+            color: var(--primary-color);
+            background-color: #f0f4ff;
+            border-color: #e0e0e0;
+        }
+
+        /* セカンダリボタン（枠線のみ） */
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            margin-top: 15px;
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f0f4ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(26, 35, 126, 0.1);
+        }
+
+        /* 結果画面 */
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 8px solid var(--secondary-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+        }
+
+        .score-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+        
+        .score-label {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+
+        .result-message {
+            font-size: 18px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        /* 進行状況バー */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background-color: #e0e0e0;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--secondary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* ユーティリティ */
+        .hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* スマホ対応 */
+        @media (max-width: 600px) {
+            .card {
+                padding: 25px 20px;
+            }
+            .question-text {
+                font-size: 18px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            .btn {
+                width: 100%;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- スタート画面 -->
+    <div id="start-screen" class="card">
+        <div class="badge">社内研修用教材</div>
+        <h1>南海トラフ地震・津波防災<br>即時予測技術 特別研修</h1>
+        <h2>全問のデータベースから<br>ランダムに5問出題されます。</h2>
+        <div style="margin-bottom: 40px; text-align: left; background: #f8f9fa; padding: 20px; border-radius: 8px; font-size: 14px;">
+            <p style="margin: 0 0 10px 0;"><strong>対象：</strong> 管理職・防災担当職員</p>
+            <p style="margin: 0;"><strong>内容：</strong> 津波警報基準、避難行動、DONETシステム等（問51～80より抽出）</p>
+        </div>
+        <button class="btn" onclick="startQuiz()">研修を開始する</button>
+    </div>
+
+    <!-- クイズ画面 -->
+    <div id="quiz-screen" class="card hidden">
+        <button class="home-btn-absolute" onclick="goHome()">
+            <span style="font-size: 16px;">🏠</span> TOPへ
+        </button>
+
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        
+        <div class="question-header">
+            <span id="question-number">Question 1/5</span>
+            <span>防災知識確認</span>
+        </div>
+        
+        <div id="question-text" class="question-text">
+            ここに問題文が表示されます。
+        </div>
+
+        <div id="options-container" class="options-grid">
+            <!-- 選択肢がここに生成されます -->
+        </div>
+
+        <!-- 解説エリア -->
+        <div id="feedback-area" class="feedback-area">
+            <span id="feedback-title" class="feedback-title"></span>
+            <div id="feedback-text" class="feedback-text"></div>
+            <div class="next-btn-container">
+                <button id="next-btn" class="btn" style="padding: 12px 30px; font-size: 14px;" onclick="nextQuestion()">次の問題へ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="result-screen" class="card hidden">
+        <div class="badge">研修終了</div>
+        <h1>結果発表</h1>
+        
+        <div class="score-circle">
+            <div class="score-display">
+                <span id="score">0</span>
+            </div>
+            <div class="score-label">POINTS</div>
+        </div>
+
+        <p id="result-message" class="result-message">お疲れ様でした。</p>
+        <p style="color: #666; font-size: 14px; margin-bottom: 30px;">
+            繰り返し学習することで、<br>知識はより確実なものになります。
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+            <button class="btn" onclick="restartQuiz()">再挑戦する（別の問題）</button>
+            <button class="btn btn-secondary" onclick="goHome()">タイトル画面へ戻る</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    /**
+     * 問題データベース
+     * 提供された情報に基づき、eラーニング教材用の問題を格納しています。
+     */
+    const questionDatabase = [
+        {
+            question: "気象庁が津波警報または津波注意報を発表する目標時間は、地震発生後最短でどの程度ですか？",
+            options: [
+                "約5分以内",
+                "約10分以内",
+                "約3分以内（一部の地震については最速2分以内）",
+                "約15分以内"
+            ],
+            correctIndex: 2,
+            explanation: "気象庁は、津波による災害が予想される場合、地震が発生してから「3分以内」（一部の地震については最速「2分以内」）を目標に津波警報または津波注意報を発表します。"
+        },
+        {
+            question: "気象庁が発表する大津波警報のうち、「10m超」の区分に対応する、予想される津波の高さの数値基準として正しいものはどれですか？",
+            options: [
+                "予想される最大波の高さが1mを超え、3m以下",
+                "予想される最大波の高さが3mを超え、5m以下",
+                "予想される最大波の高さが5mを超え、10m以下",
+                "予想される最大波の高さが10mを超える"
+            ],
+            correctIndex: 3,
+            explanation: "大津波警報の「10m超」の予想高さ区分は、「10ｍ＜予想される津波の最大波の高さ」の場合に発表されます。"
+        },
+        {
+            question: "津波注意報が発表される、予想される津波の高さの数値基準として正しいものはどれですか？",
+            options: [
+                "0.2m未満",
+                "0.2m以上、1m以下",
+                "1mを超え、3m以下",
+                "3mを超える"
+            ],
+            correctIndex: 1,
+            explanation: "津波注意報は、予想される津波の最大波の高さが高いところで「0.2ｍ以上、1ｍ以下の場合」であって、津波による災害のおそれがある場合に発表されます。"
+        },
+        {
+            question: "地震の規模がマグニチュード8を超えるような巨大地震が発生し、精度の良い地震規模をすぐに求めることができない場合、最初に発表される大津波警報の予想される津波の高さは、どのような定性的表現で伝えられますか？",
+            options: [
+                "非常",
+                "危険",
+                "巨大",
+                "最高"
+            ],
+            correctIndex: 2,
+            explanation: "マグニチュード8を超える巨大地震の場合、最初に発表される大津波警報では、予想される津波の高さを「巨大」という言葉で発表し、非常事態であることを伝えます。"
+        },
+        {
+            question: "大津波警報（10m超など）が発表された場合に、沿岸部や川沿いにいる人が取るべき行動として最も適切に推奨されているものはどれですか？",
+            options: [
+                "海に入っての作業や釣りをやめること",
+                "海から上がって海岸から離れること",
+                "ただちに高台や避難ビルなど安全な場所へ避難すること",
+                "自宅で最新情報を確認すること"
+            ],
+            correctIndex: 2,
+            explanation: "大津波警報発表時には、「ただちに高台や避難ビルなど安全な場所へ避難」することが推奨されています。"
+        },
+        {
+            question: "津波警報・注意報を発表した場合に、気象庁が発表する情報に含まれる「津波到達予想時刻」は、その津波予報区において何を指しますか？",
+            options: [
+                "津波が最も高くなる時刻",
+                "予報区の最も遅い地点に津波が到達する時刻",
+                "予報区で最も早く津波の第一波が到達する時刻",
+                "満潮時刻と津波到達が重なる時刻"
+            ],
+            correctIndex: 2,
+            explanation: "津波情報で発表される到達予想時刻は、各津波予報区で「もっとも早く津波が到達する時刻」です。場所によってはこの時刻よりも1時間以上遅れて津波が襲ってくることがあります。"
+        },
+        {
+            question: "津波警報・注意報が発表された後、避難を継続することが重要である理由として最も適切なものはどれですか？",
+            options: [
+                "津波は第一波が最大波になるとは限らず、長い時間くり返し襲ってくるため",
+                "津波警報は頻繁に誤報が出るため",
+                "津波は必ず潮位が下がる現象であるため",
+                "警報が解除されると交通機関がすぐに復旧するため"
+            ],
+            correctIndex: 0,
+            explanation: "津波は「長い時間くり返し襲ってきます」。また、津波が最も高くなるまで「数時間以上かかることがあります」。そのため、津波警報・注意報が解除されるまでは、避難を継続することが肝要です。"
+        },
+        {
+            question: "気象業務法に基づく津波警報等の法定伝達ルートにおいて、気象庁から直接情報を受け取る機関として定められているのはどれですか？",
+            options: [
+                "消防庁、海上保安庁の機関、NHK放送局、NTT東日本及びNTT西日本",
+                "市町村長",
+                "住民等",
+                "経済産業省"
+            ],
+            correctIndex: 0,
+            explanation: "気象業務法に基づく津波警報等の法定伝達ルートは、気象庁から「NTT東日本及びNTT西日本」、海上保安庁の機関、および「NHK放送局」などへ伝達されます。"
+        },
+        {
+            question: "沿岸近くで大きな地震が発生した場合、津波警報が津波の襲来に間に合わないことがあります。その際、住民が取るべき行動として最も重要なものはどれですか？",
+            options: [
+                "5分ほど待って気象庁の津波の有無の発表を待つ",
+                "強い揺れを感じても、津波の心配がないことが確実になるまで避難を開始しない",
+                "海岸付近で強い揺れを感じたら、自ら判断してすぐに安全な所へ避難する",
+                "遠方からの津波に備え、海岸に近づく"
+            ],
+            correctIndex: 2,
+            explanation: "津波警報は地震が発生してから発表まで3分程度かかるため、沿岸近くで大きな地震が発生した場合、「警報が間に合わないことがあります」。海岸付近で強い揺れを感じたら、「自ら判断してすぐに安全な所へ避難」してください。"
+        },
+        {
+            question: "津波到達予想時刻について、津波予報区の第一波到達予想時刻までに時間的な猶予が無い場合、気象庁はどのように記載して発表しますか？",
+            options: [
+                "欠測",
+                "上昇中",
+                "ただちに津波来襲と予測",
+                "第１波識別不能"
+            ],
+            correctIndex: 2,
+            explanation: "津波到達予想時刻について、第1波の到達予想時刻までに時間的な猶予が無い場合は、「ただちに津波来襲と予測」と記載して発表します。"
+        },
+        {
+            question: "気象庁が全国を66区域に細分化して津波予報区を設定する際に、主に考慮に入れている地形学的要素は何ですか？",
+            options: [
+                "都道府県の行政区画",
+                "津波の伝播経路、沿岸地形による増幅・減衰特性、および共振特性",
+                "港湾の規模と漁獲量",
+                "人口密度と建築物の数"
+            ],
+            correctIndex: 1,
+            explanation: "津波予報区の境界設定は、津波の伝播や増幅・減衰効果を反映させるため、「津波の伝播経路、沿岸地形による増幅・減衰特性、および共振特性」などの地形学的要素を考慮に入れています。"
+        },
+        {
+            question: "津波注意報の基準値が0.2mという小さな波高に設定されている運用上の主な意義は何ですか？",
+            options: [
+                "浸水被害を防ぐため",
+                "津波の波長が長いため、陸上の建物の損壊を防ぐため",
+                "0.2mであっても沿岸域や港湾内で強い流速を伴い、海域利用者の水難事故に直結する危険性を回避するため",
+                "津波の第一波を必ず観測するため"
+            ],
+            correctIndex: 2,
+            explanation: "0.2mという基準は、通常の波浪と異なり津波は強い流速を伴うため、小型船舶の転覆や、海岸付近での人の水難事故に直結する危険性を回避するための最小閾値として機能しています。"
+        },
+        {
+            question: "熊野灘などに設置されている地震・津波観測監視システム（DONET）が、リアルタイムで津波即時予測システムに入力データとして提供する主要な観測機器は何ですか？",
+            options: [
+                "レーザー距離計",
+                "海底水圧計（1ch）、強震計（3ch）、広帯域地震計（3ch）",
+                "GPS衛星のみ",
+                "潮位ブイのみ"
+            ],
+            correctIndex: 1,
+            explanation: "DONET観測網によって観測されたデータのうち、津波即時予測システムに配信されるのは、「強震計（Low gain 3ch）、広帯域地震計（3ch）および水圧計（1ch）」です。"
+        },
+        {
+            question: "DONETを用いた津波予測手法の高度化において導入された「観測点の動的選択」は、主にどのような目的で行われますか？",
+            options: [
+                "震源から遠ざかる津波による観測データを計算から除外するため",
+                "全ての観測点を常に計算に含めるため",
+                "予測に使用する観測点の総数を増やすため",
+                "予測地点からの空間的な距離のみに基づいて観測点を選ぶため"
+            ],
+            correctIndex: 0,
+            explanation: "観測点の動的選択では、津波予想地点に近づく津波のみを利用して予測を実施します。津波予想地点から遠ざかる津波によってトリガがONになった観測点は、津波予想に用いません。"
+        },
+        {
+             question: "DONET観測による津波即時予測システムが、浸水予測図（浸水域、浸水深）を提供する際に、海底水圧の観測値の絶対値平均波形の「第一波ピーク値」は、地震発生後おおよそどのくらいの時間で観測されていますか？（熊野灘の例）",
+             options: [
+                 "地震発生後約20秒",
+                 "地震発生後約7分程度",
+                 "地震発生後約30分後",
+                 "津波が沿岸に到達した後"
+             ],
+             correctIndex: 1,
+             explanation: "津波浸水予測図の提供では、DONET観測による海底静水圧の絶対値平均波形の第一波ピーク値が「地震発生後7分程度で観測されており」、その値を元に浸水予測図が表示されます。"
+        }
+    ];
+
+    // アプリケーションの状態管理
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    const TOTAL_QUESTIONS = 5; // 1回の出題数
+
+    // 配列をシャッフルする関数（フィッシャー–イェーツのシャッフル）
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // クイズ開始処理
+    function startQuiz() {
+        // 全問題からランダムに5問抽出
+        const shuffled = shuffleArray([...questionDatabase]); 
+        currentQuestions = shuffled.slice(0, TOTAL_QUESTIONS);
+        
+        currentIndex = 0;
+        score = 0;
+
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.add('hidden');
+        document.getElementById('quiz-screen').classList.remove('hidden');
+
+        loadQuestion();
+    }
+
+    // 問題読み込み表示
+    function loadQuestion() {
+        const questionData = currentQuestions[currentIndex];
+        
+        // 進捗バー更新
+        const progress = ((currentIndex) / TOTAL_QUESTIONS) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('question-number').textContent = `Question ${currentIndex + 1}/${TOTAL_QUESTIONS}`;
+
+        // 問題文セット
+        document.getElementById('question-text').textContent = questionData.question;
+
+        // 選択肢生成
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = ''; // クリア
+
+        questionData.options.forEach((option, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = option;
+            btn.onclick = () => selectAnswer(index, btn);
+            optionsContainer.appendChild(btn);
+        });
+
+        // 解説エリアを隠す
+        document.getElementById('feedback-area').style.display = 'none';
+        
+        // 次へボタンのテキストリセット
+        document.getElementById('next-btn').textContent = "次の問題へ";
+    }
+
+    // 回答選択時の処理
+    function selectAnswer(selectedIndex, selectedBtn) {
+        const questionData = currentQuestions[currentIndex];
+        const buttons = document.querySelectorAll('.option-btn');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackText = document.getElementById('feedback-text');
+        const nextBtn = document.getElementById('next-btn');
+
+        // ボタン無効化（連打防止）
+        buttons.forEach(btn => btn.disabled = true);
+
+        // 正誤判定
+        if (selectedIndex === questionData.correctIndex) {
+            score++;
+            selectedBtn.classList.add('correct');
+            feedbackTitle.textContent = "正解！";
+            feedbackTitle.style.color = "var(--success-color)";
+        } else {
+            selectedBtn.classList.add('incorrect');
+            // 正解のボタンも表示する
+            buttons[questionData.correctIndex].classList.add('correct');
+            feedbackTitle.textContent = "不正解...";
+            feedbackTitle.style.color = "var(--accent-color)";
+        }
+
+        // 解説表示
+        feedbackText.textContent = questionData.explanation;
+        feedbackArea.style.display = 'block';
+
+        // 最終問題の場合はボタンのテキストを変える
+        if (currentIndex === TOTAL_QUESTIONS - 1) {
+            nextBtn.textContent = "結果を見る";
+        }
+    }
+
+    // 次の問題へ、または結果画面へ
+    function nextQuestion() {
+        currentIndex++;
+        if (currentIndex < TOTAL_QUESTIONS) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    // 結果表示
+    function showResult() {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+
+        document.getElementById('score').textContent = score;
+        
+        const messageEl = document.getElementById('result-message');
+        const scoreColor = score === TOTAL_QUESTIONS ? "var(--success-color)" : (score >= TOTAL_QUESTIONS * 0.6 ? "var(--secondary-color)" : "var(--accent-color)");
+        
+        document.querySelector('.score-display').style.color = scoreColor;
+        document.querySelector('.score-circle').style.borderColor = scoreColor;
+
+        if (score === TOTAL_QUESTIONS) {
+            messageEl.textContent = "素晴らしい！全問正解です。";
+            messageEl.style.color = "var(--success-color)";
+        } else if (score >= TOTAL_QUESTIONS * 0.8) {
+            messageEl.textContent = "惜しい！あと少しで満点です。";
+             messageEl.style.color = "var(--secondary-color)";
+        } else {
+            messageEl.textContent = "解説を復習して、再挑戦しましょう。";
+             messageEl.style.color = "var(--text-main)";
+        }
+    }
+
+    // リスタート処理
+    function restartQuiz() {
+        startQuiz();
+    }
+
+    // TOP画面（タイトル）へ戻る処理
+    function goHome() {
+        // 確認ダイアログ（クイズ中のみ表示する等の分岐も可能ですが、今回はシンプルに遷移させます）
+        // 画面の切り替え
+        document.getElementById('start-screen').classList.remove('hidden');
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.add('hidden');
+        
+        // 状態のリセット（必要に応じて）
+        currentIndex = 0;
+        score = 0;
+        currentQuestions = [];
+    }
+</script>
+
+</body>
+</html>
