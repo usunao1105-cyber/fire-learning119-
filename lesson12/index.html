@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="緊急走行時の事故対応を支援するチェックリストアプリ">
+    <title>緊急走行事故対応支援ツール</title>
+    
+    <!-- React & ReactDOM (CDN) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel (JSX変換用) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS (スタイリング用) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: #f1f5f9;
+            touch-action: manipulation; /* スマホでのタッチ操作性向上 */
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* クリック時のアニメーション */
+        .check-anim {
+            transition: all 0.2s ease-in-out;
+        }
+        .check-anim:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- アイコンコンポーネント (インラインSVG) ---
+        // 外部ライブラリ依存を排除し、GitHub Pages等でも確実に表示されるようにしています
+        const IconBase = ({ children, size = 24, className = "" }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {children}
+            </svg>
+        );
+
+        const AlertTriangle = (props) => (
+            <IconBase {...props}>
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </IconBase>
+        );
+
+        const Clock = (props) => (
+            <IconBase {...props}>
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </IconBase>
+        );
+
+        const Phone = (props) => (
+            <IconBase {...props}>
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </IconBase>
+        );
+
+        const FileText = (props) => (
+            <IconBase {...props}>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </IconBase>
+        );
+
+        const CheckCircle = (props) => (
+            <IconBase {...props}>
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </IconBase>
+        );
+
+        const Ambulance = (props) => (
+            <IconBase {...props}>
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </IconBase>
+        );
+
+        const ShieldAlert = (props) => (
+            <IconBase {...props}>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </IconBase>
+        );
+
+        const Copy = (props) => (
+            <IconBase {...props}>
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </IconBase>
+        );
+
+        const RotateCcw = (props) => (
+            <IconBase {...props}>
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </IconBase>
+        );
+
+        // --- アプリケーションのメインロジック ---
+
+        const INITIAL_ITEMS = [
+            { id: 1, category: 'phase1', label: '直ちに停車・ハザード点灯', note: '', checked: false, time: null, placeholder: '停止位置や状況のメモ' },
+            { id: 2, category: 'phase1', label: '二次災害の防止措置', note: '', checked: false, time: null, placeholder: '発煙筒、三角停止板の設置など' },
+            { id: 3, category: 'phase1', label: '乗員（隊員）の負傷確認', note: '', checked: false, time: null, placeholder: '隊員〇〇、軽傷など' },
+            
+            { id: 4, category: 'phase2', label: '【最優先】相手方の安否確認', note: '', checked: false, time: null, placeholder: '意識・呼吸・外傷の有無' },
+            { id: 5, category: 'phase2', label: '【最優先】車内収容傷病者の観察', note: '', checked: false, time: null, placeholder: 'モニター心電図、バイタルの変化有無' },
+            { id: 6, category: 'phase2', label: '緊急の救護処置（トリアージ）', note: '', checked: false, time: null, placeholder: '相手方への止血処置など' },
+            
+            { id: 7, category: 'phase3', label: '指令センターへ第一報', note: '', checked: false, time: null, placeholder: '事故発生場所、概要' },
+            { id: 8, category: 'phase3', label: '代替救急隊の要請（継続搬送用）', note: '', checked: false, time: null, placeholder: '現傷病者の搬送用' },
+            { id: 9, category: 'phase3', label: '110番通報（警察介入要請）', note: '', checked: false, time: null, placeholder: '警察要請済み' },
+            { id: 10, category: 'phase3', label: '応援隊（救助・消防）の要請', note: '', checked: false, time: null, placeholder: '救助工作車など必要であれば' },
+            
+            { id: 11, category: 'phase4', label: '相手方情報の確認', note: '', checked: false, time: null, placeholder: '氏名、連絡先、車両ナンバー' },
+            { id: 12, category: 'phase4', label: '目撃者の確保・状況聴取', note: '', checked: false, time: null, placeholder: '目撃者連絡先' },
+            { id: 13, category: 'phase4', label: '現場保存・写真撮影', note: '', checked: false, time: null, placeholder: '信号の色、停止位置など' },
+            { id: 14, category: 'phase4', label: '上司・運行管理者への詳細報告', note: '', checked: false, time: null, placeholder: '報告相手の役職・氏名' },
+        ];
+
+        const App = () => {
+            // 初期データの安全なコピーを作成
+            const [items, setItems] = useState(() => JSON.parse(JSON.stringify(INITIAL_ITEMS)));
+            const [startTime, setStartTime] = useState(null);
+            const [elapsedTime, setElapsedTime] = useState("00:00");
+            const [showReport, setShowReport] = useState(false);
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+            const [activeNoteId, setActiveNoteId] = useState(null);
+
+            // タイマー機能
+            useEffect(() => {
+                let interval;
+                if (startTime) {
+                    interval = setInterval(() => {
+                        const now = new Date();
+                        const diff = Math.floor((now - startTime) / 1000);
+                        const m = Math.floor(diff / 60).toString().padStart(2, '0');
+                        const s = (diff % 60).toString().padStart(2, '0');
+                        setElapsedTime(`${m}:${s}`);
+                    }, 1000);
+                }
+                return () => clearInterval(interval);
+            }, [startTime]);
+
+            const handleStart = () => {
+                const now = new Date();
+                setStartTime(now);
+            };
+
+            const toggleCheck = (id) => {
+                if (!startTime) handleStart(); 
+
+                setItems(prev => prev.map(item => {
+                    if (item.id === id) {
+                        const isChecking = !item.checked;
+                        return {
+                            ...item,
+                            checked: isChecking,
+                            time: isChecking ? new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : null
+                        };
+                    }
+                    return item;
+                }));
+            };
+
+            const updateNote = (id, text) => {
+                setItems(prev => prev.map(item => {
+                    if (item.id === id) return { ...item, note: text };
+                    return item;
+                }));
+            };
+
+            // レポートテキスト生成
+            const generateReportText = () => {
+                const startStr = startTime ? startTime.toLocaleString('ja-JP') : '未開始';
+                let text = `【緊急走行事故対応記録】\n発生日時: ${startStr}\n\n`;
+                
+                items.forEach(item => {
+                    const checkMark = item.checked ? '■' : '□';
+                    const timeStr = item.time ? ` [${item.time}]` : '';
+                    const noteStr = item.note ? `\n   └ メモ: ${item.note}` : '';
+                    text += `${checkMark} ${item.label}${timeStr}${noteStr}\n`;
+                });
+                
+                text += `\n記録終了: ${new Date().toLocaleTimeString('ja-JP')}`;
+                return text;
+            };
+
+            const copyToClipboard = () => {
+                const text = generateReportText();
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    alert('レポートをクリップボードにコピーしました');
+                } catch (err) {
+                    alert('コピーに失敗しました');
+                }
+                document.body.removeChild(textArea);
+            };
+
+            const executeReset = () => {
+                setItems(JSON.parse(JSON.stringify(INITIAL_ITEMS)));
+                setStartTime(null);
+                setElapsedTime("00:00");
+                setShowReport(false);
+                setShowResetConfirm(false);
+                setActiveNoteId(null);
+            };
+
+            const CategoryHeader = ({ title, icon: Icon, colorClass }) => (
+                <div className={`sticky top-0 z-10 flex items-center gap-2 p-3 mt-4 mb-2 font-bold text-white rounded shadow-md ${colorClass}`}>
+                    <Icon size={20} />
+                    <span>{title}</span>
+                </div>
+            );
+
+            const ActionItem = ({ item }) => {
+                const isChecked = item.checked;
+                return (
+                    <div className={`mb-3 transition-all duration-300 border-l-4 rounded bg-white shadow-sm ${isChecked ? 'border-green-500 bg-green-50' : 'border-gray-300'}`}>
+                        <div 
+                            className="flex items-center p-4 cursor-pointer check-anim"
+                            onClick={() => toggleCheck(item.id)}
+                        >
+                            <div className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full border-2 mr-3 ${isChecked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-400 text-transparent'}`}>
+                                <CheckCircle size={20} />
+                            </div>
+                            <div className="flex-grow">
+                                <div className={`font-bold text-lg leading-tight ${isChecked ? 'text-green-800' : 'text-gray-800'}`}>
+                                    {item.label}
+                                </div>
+                                {isChecked && (
+                                    <div className="text-sm font-bold text-green-600 mt-1 flex items-center gap-1">
+                                        <Clock size={14} /> 完了時刻: {item.time}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="px-4 pb-2">
+                             <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveNoteId(activeNoteId === item.id ? null : item.id);
+                                }}
+                                className="text-xs text-blue-600 underline flex items-center gap-1 mb-2"
+                            >
+                                <FileText size={12} /> {item.note ? 'メモを編集' : 'メモ・詳細を追加'}
+                            </button>
+
+                            {(activeNoteId === item.id || item.note) && (
+                                <div className="mt-1 mb-3">
+                                    <textarea
+                                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        rows="2"
+                                        placeholder={item.placeholder || "詳細を入力..."}
+                                        value={item.note}
+                                        onChange={(e) => updateNote(item.id, e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            // スタート画面
+            if (!startTime && !showReport) {
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-800 text-white p-6">
+                        <div className="mb-8 text-center">
+                            <ShieldAlert size={64} className="mx-auto mb-4 text-red-500" />
+                            <h1 className="text-3xl font-bold mb-2">緊急走行事故<br/>対応支援ツール</h1>
+                            <p className="text-gray-300 text-sm">パニックを防ぎ、手順を漏らさず記録します。</p>
+                        </div>
+                        <button 
+                            onClick={handleStart}
+                            className="w-full max-w-sm bg-red-600 hover:bg-red-700 text-white font-bold py-6 px-8 rounded-2xl shadow-lg text-2xl transition transform active:scale-95 flex items-center justify-center gap-3"
+                        >
+                            <AlertTriangle size={32} />
+                            対応開始
+                        </button>
+                        <p className="mt-8 text-xs text-gray-500 text-center max-w-xs">
+                            ※このアプリは補助ツールです。必ず所属の活動基準に従ってください。<br/>
+                            ※ブラウザを閉じるとデータは消えます。
+                        </p>
+                    </div>
+                );
+            }
+
+            // メイン画面
+            return (
+                <div className="min-h-screen pb-24 max-w-md mx-auto relative bg-slate-100">
+                    
+                    <header className="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-lg flex justify-between items-center">
+                        <div>
+                            <h1 className="text-sm font-bold text-gray-400">経過時間</h1>
+                            <div className="text-3xl font-mono font-bold text-red-400">{elapsedTime}</div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-xs text-gray-400">開始時刻</div>
+                            <div className="font-bold">{startTime.toLocaleTimeString()}</div>
+                        </div>
+                    </header>
+
+                    <div className="p-4">
+                        <CategoryHeader title="1. 直ちに安全確保・確認" icon={ShieldAlert} colorClass="bg-red-600" />
+                        {items.filter(i => i.category === 'phase1').map(item => (
+                            <ActionItem key={item.id} item={item} />
+                        ))}
+
+                        <CategoryHeader title="2. 傷病者・相手方の救護" icon={Ambulance} colorClass="bg-orange-600" />
+                        <div className="bg-orange-100 border border-orange-300 p-3 mb-3 rounded text-sm text-orange-900">
+                            <strong>重要:</strong> 搬送中の傷病者がいる場合、状態悪化がないか継続観察し、必要なら代替隊を早期要請してください。
+                        </div>
+                        {items.filter(i => i.category === 'phase2').map(item => (
+                            <ActionItem key={item.id} item={item} />
+                        ))}
+
+                        <CategoryHeader title="3. 通報・要請・連絡" icon={Phone} colorClass="bg-blue-600" />
+                        {items.filter(i => i.category === 'phase3').map(item => (
+                            <ActionItem key={item.id} item={item} />
+                        ))}
+
+                        <CategoryHeader title="4. 現場保存・聴取" icon={FileText} colorClass="bg-slate-600" />
+                        {items.filter(i => i.category === 'phase4').map(item => (
+                            <ActionItem key={item.id} item={item} />
+                        ))}
+                    </div>
+
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex gap-3 max-w-md mx-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
+                         <button 
+                            onClick={() => setShowResetConfirm(true)}
+                            className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded flex flex-col items-center justify-center text-xs"
+                        >
+                            <RotateCcw size={18} className="mb-1" />
+                            リセット
+                        </button>
+                        <button 
+                            onClick={() => setShowReport(true)}
+                            className="flex-[2] bg-blue-600 text-white font-bold py-3 rounded shadow flex flex-col items-center justify-center text-xs"
+                        >
+                            <FileText size={18} className="mb-1" />
+                            記録を確認・コピー
+                        </button>
+                    </div>
+
+                    {/* リセット確認モーダル */}
+                    {showResetConfirm && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4">
+                            <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">記録をリセットしますか？</h3>
+                                <p className="text-sm text-gray-600 mb-6">現在の記録内容はすべて消去され、初期状態に戻ります。</p>
+                                <div className="flex gap-3 justify-center">
+                                    <button 
+                                        onClick={() => setShowResetConfirm(false)}
+                                        className="flex-1 py-2 border border-gray-300 rounded text-gray-600 font-bold"
+                                    >
+                                        キャンセル
+                                    </button>
+                                    <button 
+                                        onClick={executeReset}
+                                        className="flex-1 py-2 bg-red-600 text-white rounded font-bold shadow"
+                                    >
+                                        リセットする
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* レポートモーダル */}
+                    {showReport && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
+                            <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+                                <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                                    <h2 className="font-bold text-lg flex items-center gap-2">
+                                        <FileText size={20} /> 対応記録プレビュー
+                                    </h2>
+                                    <button onClick={() => setShowReport(false)} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                                </div>
+                                <div className="p-4 overflow-y-auto flex-grow">
+                                    <pre className="whitespace-pre-wrap text-sm font-mono bg-gray-100 p-3 rounded border border-gray-300">
+                                        {generateReportText()}
+                                    </pre>
+                                </div>
+                                <div className="p-4 border-t flex gap-3">
+                                    <button 
+                                        onClick={() => setShowReport(false)}
+                                        className="flex-1 py-3 border border-gray-300 rounded font-bold text-gray-600"
+                                    >
+                                        閉じる
+                                    </button>
+                                    <button 
+                                        onClick={copyToClipboard}
+                                        className="flex-1 py-3 bg-green-600 text-white rounded font-bold shadow flex items-center justify-center gap-2"
+                                    >
+                                        <Copy size={18} /> コピー
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
