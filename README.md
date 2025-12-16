@@ -140,7 +140,7 @@
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 11</div>
-      <div class="lesson-desc">心理対応・住民支援</div>
+      <div class="lesson-desc">報告・連絡・相談MEMO</div>
       <a href="lesson11/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
