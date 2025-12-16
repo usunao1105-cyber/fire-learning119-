@@ -39,7 +39,6 @@
         const { useState, useEffect, useRef } = React;
 
         // --- アイコンコンポーネント (インラインSVG) ---
-        // 外部ライブラリ依存を排除し、GitHub Pages等でも確実に表示されるようにしています
         const IconBase = ({ children, size = 24, className = "" }) => (
             <svg 
                 xmlns="http://www.w3.org/2000/svg" 
@@ -126,6 +125,66 @@
             </IconBase>
         );
 
+        // --- 子コンポーネント定義 (Appの外に出すことで再レンダリング問題を解消) ---
+
+        const CategoryHeader = ({ title, icon: Icon, colorClass }) => (
+            <div className={`sticky top-0 z-10 flex items-center gap-2 p-3 mt-4 mb-2 font-bold text-white rounded shadow-md ${colorClass}`}>
+                <Icon size={20} />
+                <span>{title}</span>
+            </div>
+        );
+
+        const ActionItem = ({ item, toggleCheck, activeNoteId, setActiveNoteId, updateNote }) => {
+            const isChecked = item.checked;
+            return (
+                <div className={`mb-3 transition-all duration-300 border-l-4 rounded bg-white shadow-sm ${isChecked ? 'border-green-500 bg-green-50' : 'border-gray-300'}`}>
+                    <div 
+                        className="flex items-center p-4 cursor-pointer check-anim"
+                        onClick={() => toggleCheck(item.id)}
+                    >
+                        <div className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full border-2 mr-3 ${isChecked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-400 text-transparent'}`}>
+                            <CheckCircle size={20} />
+                        </div>
+                        <div className="flex-grow">
+                            <div className={`font-bold text-lg leading-tight ${isChecked ? 'text-green-800' : 'text-gray-800'}`}>
+                                {item.label}
+                            </div>
+                            {isChecked && (
+                                <div className="text-sm font-bold text-green-600 mt-1 flex items-center gap-1">
+                                    <Clock size={14} /> 完了時刻: {item.time}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="px-4 pb-2">
+                            <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveNoteId(activeNoteId === item.id ? null : item.id);
+                            }}
+                            className="text-xs text-blue-600 underline flex items-center gap-1 mb-2"
+                        >
+                            <FileText size={12} /> {item.note ? 'メモを編集' : 'メモ・詳細を追加'}
+                        </button>
+
+                        {(activeNoteId === item.id || item.note) && (
+                            <div className="mt-1 mb-3">
+                                <textarea
+                                    className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    rows="2"
+                                    placeholder={item.placeholder || "詳細を入力..."}
+                                    value={item.note}
+                                    onChange={(e) => updateNote(item.id, e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
         // --- アプリケーションのメインロジック ---
 
         const INITIAL_ITEMS = [
@@ -149,7 +208,6 @@
         ];
 
         const App = () => {
-            // 初期データの安全なコピーを作成
             const [items, setItems] = useState(() => JSON.parse(JSON.stringify(INITIAL_ITEMS)));
             const [startTime, setStartTime] = useState(null);
             const [elapsedTime, setElapsedTime] = useState("00:00");
@@ -157,7 +215,6 @@
             const [showResetConfirm, setShowResetConfirm] = useState(false);
             const [activeNoteId, setActiveNoteId] = useState(null);
 
-            // タイマー機能
             useEffect(() => {
                 let interval;
                 if (startTime) {
@@ -200,7 +257,6 @@
                 }));
             };
 
-            // レポートテキスト生成
             const generateReportText = () => {
                 const startStr = startTime ? startTime.toLocaleString('ja-JP') : '未開始';
                 let text = `【緊急走行事故対応記録】\n発生日時: ${startStr}\n\n`;
@@ -238,64 +294,6 @@
                 setShowReport(false);
                 setShowResetConfirm(false);
                 setActiveNoteId(null);
-            };
-
-            const CategoryHeader = ({ title, icon: Icon, colorClass }) => (
-                <div className={`sticky top-0 z-10 flex items-center gap-2 p-3 mt-4 mb-2 font-bold text-white rounded shadow-md ${colorClass}`}>
-                    <Icon size={20} />
-                    <span>{title}</span>
-                </div>
-            );
-
-            const ActionItem = ({ item }) => {
-                const isChecked = item.checked;
-                return (
-                    <div className={`mb-3 transition-all duration-300 border-l-4 rounded bg-white shadow-sm ${isChecked ? 'border-green-500 bg-green-50' : 'border-gray-300'}`}>
-                        <div 
-                            className="flex items-center p-4 cursor-pointer check-anim"
-                            onClick={() => toggleCheck(item.id)}
-                        >
-                            <div className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full border-2 mr-3 ${isChecked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-400 text-transparent'}`}>
-                                <CheckCircle size={20} />
-                            </div>
-                            <div className="flex-grow">
-                                <div className={`font-bold text-lg leading-tight ${isChecked ? 'text-green-800' : 'text-gray-800'}`}>
-                                    {item.label}
-                                </div>
-                                {isChecked && (
-                                    <div className="text-sm font-bold text-green-600 mt-1 flex items-center gap-1">
-                                        <Clock size={14} /> 完了時刻: {item.time}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="px-4 pb-2">
-                             <button 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveNoteId(activeNoteId === item.id ? null : item.id);
-                                }}
-                                className="text-xs text-blue-600 underline flex items-center gap-1 mb-2"
-                            >
-                                <FileText size={12} /> {item.note ? 'メモを編集' : 'メモ・詳細を追加'}
-                            </button>
-
-                            {(activeNoteId === item.id || item.note) && (
-                                <div className="mt-1 mb-3">
-                                    <textarea
-                                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        rows="2"
-                                        placeholder={item.placeholder || "詳細を入力..."}
-                                        value={item.note}
-                                        onChange={(e) => updateNote(item.id, e.target.value)}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
             };
 
             // スタート画面
@@ -340,7 +338,14 @@
                     <div className="p-4">
                         <CategoryHeader title="1. 直ちに安全確保・確認" icon={ShieldAlert} colorClass="bg-red-600" />
                         {items.filter(i => i.category === 'phase1').map(item => (
-                            <ActionItem key={item.id} item={item} />
+                            <ActionItem 
+                                key={item.id} 
+                                item={item} 
+                                toggleCheck={toggleCheck} 
+                                activeNoteId={activeNoteId} 
+                                setActiveNoteId={setActiveNoteId} 
+                                updateNote={updateNote} 
+                            />
                         ))}
 
                         <CategoryHeader title="2. 傷病者・相手方の救護" icon={Ambulance} colorClass="bg-orange-600" />
@@ -348,17 +353,38 @@
                             <strong>重要:</strong> 搬送中の傷病者がいる場合、状態悪化がないか継続観察し、必要なら代替隊を早期要請してください。
                         </div>
                         {items.filter(i => i.category === 'phase2').map(item => (
-                            <ActionItem key={item.id} item={item} />
+                            <ActionItem 
+                                key={item.id} 
+                                item={item} 
+                                toggleCheck={toggleCheck} 
+                                activeNoteId={activeNoteId} 
+                                setActiveNoteId={setActiveNoteId} 
+                                updateNote={updateNote} 
+                            />
                         ))}
 
                         <CategoryHeader title="3. 通報・要請・連絡" icon={Phone} colorClass="bg-blue-600" />
                         {items.filter(i => i.category === 'phase3').map(item => (
-                            <ActionItem key={item.id} item={item} />
+                            <ActionItem 
+                                key={item.id} 
+                                item={item} 
+                                toggleCheck={toggleCheck} 
+                                activeNoteId={activeNoteId} 
+                                setActiveNoteId={setActiveNoteId} 
+                                updateNote={updateNote} 
+                            />
                         ))}
 
                         <CategoryHeader title="4. 現場保存・聴取" icon={FileText} colorClass="bg-slate-600" />
                         {items.filter(i => i.category === 'phase4').map(item => (
-                            <ActionItem key={item.id} item={item} />
+                            <ActionItem 
+                                key={item.id} 
+                                item={item} 
+                                toggleCheck={toggleCheck} 
+                                activeNoteId={activeNoteId} 
+                                setActiveNoteId={setActiveNoteId} 
+                                updateNote={updateNote} 
+                            />
                         ))}
                     </div>
 
