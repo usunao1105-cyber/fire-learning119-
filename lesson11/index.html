@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ja" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <title>消防業務報告アプリ</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* アニメーション定義 */
+        @keyframes moveCursor {
+            0% { transform: translate(550px, 250px); }
+            10% { transform: translate(100px, 80px); }
+            20% { transform: translate(100px, 80px); }
+            35% { transform: translate(150px, 150px); }
+            60% { transform: translate(480px, 220px); }
+            70% { transform: translate(480px, 220px); }
+            100% { transform: translate(550px, 250px); }
+        }
+        
+        @keyframes clickPulse {
+            0%, 15%, 65%, 100% { opacity: 0; transform: scale(0.5); }
+            18% { opacity: 1; transform: scale(1.2); }
+            25% { opacity: 0; transform: scale(1.5); }
+            68% { opacity: 1; transform: scale(1.2); }
+            75% { opacity: 0; transform: scale(1.5); }
+        }
+        
+        @keyframes typeText {
+            0%, 35% { width: 0; opacity: 0; }
+            36% { opacity: 1; }
+            50% { width: 120px; opacity: 1; }
+            100% { width: 120px; opacity: 1; }
+        }
+        
+        @keyframes showPreview {
+            0%, 40% { opacity: 0; transform: translateY(5px); }
+            45% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes showFeedback {
+            0%, 70% { opacity: 0; transform: translateY(10px); }
+            75% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+
+        .cursor { animation: moveCursor 6s infinite ease-in-out; }
+        
+        .click-effect { 
+            animation: clickPulse 6s infinite; 
+            opacity: 0; 
+            transform-origin: center;
+        }
+        
+        .text-input { 
+            animation: typeText 6s infinite steps(20); 
+            opacity: 0; 
+        }
+        
+        .preview-line { 
+            animation: showPreview 6s infinite ease-out; 
+            opacity: 0; 
+        }
+        
+        .copy-feedback { 
+            animation: showFeedback 6s infinite; 
+            opacity: 0; 
+        }
+
+        /* アニメーション遅延用クラス */
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+        .delay-500 { animation-delay: 0.5s; }
+        .delay-800 { animation-delay: 0.8s; }
+        .delay-3000 { animation-delay: 3s; }
+        
+        /* スクロールバーのカスタマイズ */
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 notranslate">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- アイコンコンポーネント ---
+        const Icon = ({ path, className, onClick }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className} 
+                onClick={onClick}
+            >
+                {path}
+            </svg>
+        );
+
+        const RefreshCw = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></>} />;
+        const Send = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} />;
+        const CheckCircle2 = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></>} />;
+        const AlertCircle = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>} />;
+        const Info = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>} />;
+        const Copy = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></>} />;
+        const Flame = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-2.072-2.143-3-3a6.002 6.002 0 0 1 11.666 4.666C18.667 11.667 18.667 12 18.667 12a2.5 2.5 0 0 1-2.5 2.5c-.7 0-1.5-.5-2-1-.5-1-2-1-2-1s-1.5 0-2 1c-.5.5-.3 1.2 0 2a3.5 3.5 0 0 0 4.2 1.3A6.002 6.002 0 0 1 2 12c0-1 .333-2 1-3" />} />;
+        const User = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />;
+        const Building2 = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></>} />;
+        const MapPin = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></>} />;
+        const Clock = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>} />;
+        const HelpCircle = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>} />;
+        const Activity = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>} />;
+        /* Mapアイコンコンポーネント削除（グローバルMapオブジェクトとの競合回避のため） */
+        const X = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>} />;
+        const ChevronDown = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<path d="m6 9 6 6 6-6"/>} />;
+        const ChevronUp = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<path d="m18 15-6-6-6 6"/>} />;
+
+        // --- メインアプリケーション ---
+        const App = () => {
+            const [formData, setFormData] = useState({
+                type: '災害',
+                priority: '普通',
+                reporterDept: '',
+                reporterName: '',
+                to: '',
+                subject: '',
+                content: '',
+                when: '',
+                where: '',
+                what: '',
+                who: '',
+                why: '',
+                how: '',
+                nextAction: '',
+                deadline: '',
+            });
+
+            const [generatedText, setGeneratedText] = useState('');
+            const [copyStatus, setCopyStatus] = useState('idle');
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+            const [showTutorial, setShowTutorial] = useState(false);
+
+            useEffect(() => {
+                try {
+                    const savedDept = localStorage.getItem('fireDept_reporterDept');
+                    const savedName = localStorage.getItem('fireDept_reporterName');
+                    if (savedDept || savedName) {
+                        setFormData(prev => ({
+                            ...prev,
+                            reporterDept: savedDept || '',
+                            reporterName: savedName || ''
+                        }));
+                    }
+                } catch (e) {
+                    console.error('LocalStorage access failed', e);
+                }
+            }, []);
+
+            const formatDateTime = (isoString) => {
+                if (!isoString) return '（未入力）';
+                try {
+                    const d = new Date(isoString);
+                    if (isNaN(d.getTime())) return isoString;
+                    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                } catch (e) {
+                    return isoString;
+                }
+            };
+
+            useEffect(() => {
+                const iconMap = {
+                    '災害': '【災害報告】',
+                    '報告': '【業務報告】',
+                    '連絡': '【事務連絡】',
+                    '相談': '【相談】'
+                };
+                
+                const priorityMap = {
+                    '低': '',
+                    '普通': '',
+                    '高': '【重要】',
+                    '至急': '【至急】'
+                };
+
+                const typeStr = iconMap[formData.type] || '';
+                const priorityStr = priorityMap[formData.priority] || '';
+                
+                let subjectLine = `${priorityStr}${typeStr} ${formData.subject}`;
+                
+                const signature = formData.reporterDept || formData.reporterName 
+                    ? `\n報告者: ${formData.reporterDept} ${formData.reporterName}`
+                    : '';
+
+                const actionVerb = formData.type === '災害' ? '報告' : formData.type;
+
+                let body = `${formData.to ? formData.to + '\n\n' : ''}お疲れ様です。
+${signature ? signature + ' です。\n' : ''}以下の通り、${actionVerb}いたします。
+
+■件名
+${formData.subject}
+`;
+
+                if (formData.type === '災害') {
+                    body += `
+■発生日時 (When)
+${formatDateTime(formData.when)}
+
+■発生場所 (Where)
+${formData.where || '（未入力）'}
+
+■災害種別・概要 (What)
+${formData.what || '（未入力）'}
+
+■対象者・関係者 (Who)
+${formData.who || '（なし）'}
+
+■原因・状況詳細 (Why)
+${formData.why || '（調査中）'}
+
+■活動内容・処置 (How)
+${formData.how || '（活動中）'}
+`;
+                } else {
+                    body += `
+■内容
+${formData.content}
+`;
+                }
+
+                if (formData.nextAction) {
+                    body += `
+■今後の対応・依頼事項
+${formData.nextAction}
+`;
+                }
+
+                if (formData.deadline) {
+                    body += `
+■期限
+${formData.deadline}
+`;
+                }
+
+                body += `
+以上です。ご確認をお願いいたします。`;
+
+                setGeneratedText(subjectLine + '\n\n----------------------------\n' + body);
+            }, [formData]);
+
+            const handleInputChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: value
+                }));
+
+                if (name === 'reporterDept' || name === 'reporterName') {
+                    try {
+                        localStorage.setItem(`fireDept_${name}`, value);
+                    } catch (e) {
+                        // ignore storage errors
+                    }
+                }
+            };
+
+            const handleCopy = () => {
+                const textarea = document.createElement('textarea');
+                textarea.value = generatedText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    setCopyStatus('copied');
+                    setTimeout(() => setCopyStatus('idle'), 2000);
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+                document.body.removeChild(textarea);
+            };
+
+            const executeReset = () => {
+                setFormData(prev => ({
+                    type: prev.type,
+                    reporterDept: prev.reporterDept,
+                    reporterName: prev.reporterName,
+                    priority: '普通',
+                    to: '',
+                    subject: '',
+                    content: '',
+                    when: '',
+                    where: '',
+                    what: '',
+                    who: '',
+                    why: '',
+                    how: '',
+                    nextAction: '',
+                    deadline: '',
+                }));
+                setShowResetConfirm(false);
+            };
+
+            const getActiveTypeColor = (type) => {
+                switch (type) {
+                    case '災害': return 'bg-red-600 text-white shadow-md ring-2 ring-red-300';
+                    case '報告': return 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300';
+                    case '連絡': return 'bg-green-600 text-white shadow-md ring-2 ring-green-300';
+                    case '相談': return 'bg-orange-500 text-white shadow-md ring-2 ring-orange-300';
+                    default: return 'bg-gray-600 text-white';
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-100 text-slate-800 font-sans selection:bg-red-100 pb-12">
+                    
+                    {showResetConfirm && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+                            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border border-slate-200">
+                                <h3 className="font-bold text-lg mb-2 text-slate-800 flex items-center gap-2">
+                                    <AlertCircle className="w-5 h-5 text-red-500" />
+                                    入力内容のクリア
+                                </h3>
+                                <p className="text-slate-600 mb-6 text-sm leading-relaxed">
+                                    入力中の件名や本文をすべて消去しますか？<br/>
+                                    <span className="text-xs text-slate-400 mt-1 block">※所属・氏名・報告種別は維持されます</span>
+                                </p>
+                                <div className="flex gap-3 justify-end">
+                                    <button 
+                                        onClick={() => setShowResetConfirm(false)}
+                                        className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-bold transition-colors"
+                                    >
+                                        キャンセル
+                                    </button>
+                                    <button 
+                                        onClick={executeReset}
+                                        className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg text-sm font-bold shadow-sm transition-colors"
+                                    >
+                                        クリア実行
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <header className="bg-slate-900 shadow-md border-b border-slate-700 sticky top-0 z-10 text-white">
+                        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-red-600 p-2 rounded-lg shadow-lg shadow-red-900/50">
+                                    <Flame className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold leading-none tracking-tight">消防業務報告</h1>
+                                    <span className="text-xs text-slate-400 font-mono">Fire Dept. Reporting System</span>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setShowResetConfirm(true)}
+                                className="text-sm text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-1 px-3 py-1.5 rounded-md transition-colors"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                                クリア
+                            </button>
+                        </div>
+                    </header>
+
+                    <div className="bg-white border-b border-slate-200">
+                        <div className="max-w-6xl mx-auto">
+                            <button 
+                                onClick={() => setShowTutorial(!showTutorial)}
+                                className="w-full py-2 px-4 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                                <HelpCircle className="w-4 h-4" />
+                                <span>初めての方へ：使い方を見る（アニメーション解説）</span>
+                                {showTutorial ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            </button>
+                            
+                            {showTutorial && (
+                                <div className="p-4 md:p-8 bg-slate-50 animate-in slide-in-from-top-4 duration-300">
+                                    <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                                        <div className="aspect-video w-full relative bg-slate-100">
+                                            <svg viewBox="0 0 600 300" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                                                <rect x="20" y="20" width="260" height="260" rx="8" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
+                                                <rect x="300" y="20" width="280" height="260" rx="8" fill="#1e293b" stroke="#334155" strokeWidth="2" />
+                                                
+                                                <text x="40" y="50" fontSize={14} fontWeight="bold" fill="#64748b">1. 種別を選ぶ</text>
+                                                <g transform="translate(40, 70)">
+                                                    <rect x="0" y="0" width="60" height="30" rx="4" fill="#ef4444" opacity="0.2" />
+                                                    <text x="30" y="20" textAnchor="middle" fontSize={10} fill="#ef4444" fontWeight="bold">災害</text>
+                                                    <circle cx="30" cy="15" r="20" fill="none" stroke="#ef4444" strokeWidth="2" className="click-effect" />
+                                                </g>
+                                                <g transform="translate(110, 70)">
+                                                    <rect x="0" y="0" width="60" height="30" rx="4" fill="white" stroke="#e2e8f0" />
+                                                    <text x="30" y="20" textAnchor="middle" fontSize={10} fill="#94a3b8">報告</text>
+                                                </g>
+
+                                                <text x="40" y="130" fontSize={14} fontWeight="bold" fill="#64748b">2. 内容を入力</text>
+                                                <g transform="translate(40, 145)">
+                                                    <rect x="0" y="0" width="220" height="80" rx="4" fill="white" stroke="#e2e8f0" />
+                                                    <rect x="10" y="10" height="10" fill="#94a3b8" className="text-input" />
+                                                    <rect x="10" y="30" height="10" fill="#cbd5e1" className="text-input delay-500" />
+                                                    <rect x="10" y="50" height="10" fill="#cbd5e1" className="text-input delay-800" />
+                                                </g>
+
+                                                <text x="320" y="50" fontSize={14} fontWeight="bold" fill="#94a3b8">3. 自動生成</text>
+                                                <g transform="translate(320, 70)">
+                                                    <rect x="0" y="0" width="150" height="10" rx="2" fill="#475569" className="preview-line" />
+                                                    <rect x="0" y="20" width="240" height="8" rx="2" fill="#334155" className="preview-line delay-100" />
+                                                    <rect x="0" y="35" width="200" height="8" rx="2" fill="#334155" className="preview-line delay-200" />
+                                                    <rect x="0" y="50" width="220" height="8" rx="2" fill="#334155" className="preview-line delay-300" />
+                                                    <rect x="0" y="80" width="240" height="1" fill="#475569" className="preview-line delay-400" />
+                                                </g>
+
+                                                <g transform="translate(320, 200)">
+                                                    <text x="0" y="-10" fontSize={14} fontWeight="bold" fill="#94a3b8">4. コピー</text>
+                                                    <rect x="0" y="0" width="240" height="40" rx="6" fill="#ef4444" />
+                                                    <text x="120" y="25" textAnchor="middle" fontSize={14} fontWeight="bold" fill="white">テキストをコピー</text>
+                                                    <circle cx="120" cy="20" r="30" fill="none" stroke="white" strokeWidth="3" className="click-effect delay-3000" />
+                                                </g>
+
+                                                <g transform="translate(440, 150)" className="copy-feedback">
+                                                    <rect x="-60" y="-20" width="120" height="40" rx="20" fill="#22c55e" />
+                                                    <text x="0" y="5" textAnchor="middle" fontSize={12} fontWeight="bold" fill="white">コピー完了！</text>
+                                                </g>
+
+                                                <polygon points="0,0 0,18 4.5,14 8,22 10,21 6.5,13 12,12" fill="white" stroke="black" strokeWidth="1.5" className="cursor" />
+                                            </svg>
+                                            <div className="absolute bottom-4 left-0 right-0 text-center text-xs text-slate-400">
+                                                アニメーションは自動でループ再生されます
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <main className="max-w-6xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        
+                        <div className="lg:col-span-7 space-y-6">
+                            
+                            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                <div className="flex items-center gap-2 text-slate-600 min-w-fit">
+                                    <User className="w-5 h-5" />
+                                    <span className="font-bold text-sm">報告者 (自動保存)</span>
+                                </div>
+                                <div className="flex-1 grid grid-cols-2 gap-3 w-full">
+                                    <input
+                                        type="text"
+                                        name="reporterDept"
+                                        value={formData.reporterDept}
+                                        onChange={handleInputChange}
+                                        placeholder="所属 (例: 第一中隊)"
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-colors"
+                                        autoComplete="off"
+                                    />
+                                    <input
+                                        type="text"
+                                        name="reporterName"
+                                        value={formData.reporterName}
+                                        onChange={handleInputChange}
+                                        placeholder="氏名 (例: 消防 士長)"
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-colors"
+                                        autoComplete="off"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                                <label className="block text-sm font-semibold text-slate-600 mb-3">報告種別</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {['災害', '報告', '連絡', '相談'].map((type) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setFormData(prev => ({ ...prev, type }))}
+                                            className={`
+                                                py-3 rounded-lg font-bold text-sm transition-all duration-200 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2
+                                                ${formData.type === type 
+                                                    ? getActiveTypeColor(type) 
+                                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}
+                                            `}
+                                        >
+                                            {type === '災害' && <Flame className="w-4 h-4" />}
+                                            {type === '報告' && <CheckCircle2 className="w-4 h-4" />}
+                                            {type === '連絡' && <Info className="w-4 h-4" />}
+                                            {type === '相談' && <AlertCircle className="w-4 h-4" />}
+                                            <span>{type}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                                <div className="grid grid-cols-12 gap-4">
+                                    <div className="col-span-4">
+                                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">重要度</label>
+                                        <select
+                                            name="priority"
+                                            value={formData.priority}
+                                            onChange={handleInputChange}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all font-medium"
+                                        >
+                                            <option value="低">低</option>
+                                            <option value="普通">普通</option>
+                                            <option value="高">高（重要）</option>
+                                            <option value="至急">至急（緊急）</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div className="col-span-8">
+                                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">宛先（任意）</label>
+                                        <input
+                                            type="text"
+                                            name="to"
+                                            value={formData.to}
+                                            onChange={handleInputChange}
+                                            placeholder="本部、○○隊長、全職員"
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                                            autoComplete="off"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">
+                                        件名 <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="subject"
+                                        value={formData.subject}
+                                        onChange={handleInputChange}
+                                        placeholder={formData.type === '災害' ? "例：○○町○丁目 建物火災について" : "例：車両点検の結果報告"}
+                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all font-bold"
+                                        autoComplete="off"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4 border-l-4 border-l-red-500">
+                                
+                                {formData.type === '災害' ? (
+                                    <div className="space-y-4 animate-in fade-in duration-300">
+                                        <h3 className="font-bold text-red-700 flex items-center gap-2 border-b border-red-100 pb-2 mb-4">
+                                            <Flame className="w-5 h-5" />
+                                            災害詳細報告 (5W1H)
+                                        </h3>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-1">
+                                                    <Clock className="w-3 h-3 text-red-500" /> 発生日時 (When)
+                                                </label>
+                                                <input
+                                                    type="datetime-local"
+                                                    name="when"
+                                                    value={formData.when}
+                                                    onChange={handleInputChange}
+                                                    className="w-full p-2 bg-red-50/50 border border-slate-200 rounded focus:border-red-500 outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-1">
+                                                    <MapPin className="w-3 h-3 text-red-500" /> 発生場所 (Where)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="where"
+                                                    value={formData.where}
+                                                    onChange={handleInputChange}
+                                                    placeholder="例：○○町1-2-3（住所を入力すると地図が出ます）"
+                                                    className="w-full p-2 bg-red-50/50 border border-slate-200 rounded focus:border-red-500 outline-none"
+                                                    autoComplete="off"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-1">
+                                                <Flame className="w-3 h-3 text-red-500" /> 災害種別・概要 (What)
+                                            </label>
+                                            <textarea
+                                                name="what"
+                                                value={formData.what}
+                                                onChange={handleInputChange}
+                                                rows={2}
+                                                placeholder="例：木造2階建て住宅より出火、延焼中"
+                                                className="w-full p-2 bg-red-50/50 border border-slate-200 rounded focus:border-red-500 outline-none resize-none"
+                                                autoComplete="off"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-1">
+                                                    <User className="w-3 h-3 text-red-500" /> 対象・関係者 (Who)
+                                                </label>
+                                                <textarea
+                                                    name="who"
+                                                    value={formData.who}
+                                                    onChange={handleInputChange}
+                                                    rows={2}
+                                                    placeholder="例：逃げ遅れ1名あり、住人避難済み"
+                                                    className="w-full p-2 bg-red-50/50 border border-slate-200 rounded focus:border-red-500 outline-none resize-none"
+                                                    autoComplete="off"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-1">
+                                                    <HelpCircle className="w-3 h-3 text-red-500" /> 原因・経緯 (Why)
+                                                </label>
+                                                <textarea
+                                                    name="why"
+                                                    value={formData.why}
+                                                    onChange={handleInputChange}
+                                                    rows={2}
+                                                    placeholder="例：天ぷら油の過熱、詳細調査中"
+                                                    className="w-full p-2 bg-red-50/50 border border-slate-200 rounded focus:border-red-500 outline-none resize-none"
+                                                    autoComplete="off"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="flex items-center gap-1 text-sm font-bold text-slate-700 mb-1">
+                                                <Activity className="w-3 h-3 text-red-500" /> 活動内容・処置 (How)
+                                            </label>
+                                            <textarea
+                                                name="how"
+                                                value={formData.how}
+                                                onChange={handleInputChange}
+                                                rows={3}
+                                                placeholder="例：放水活動実施中、救急隊による搬送完了"
+                                                className="w-full p-2 bg-red-50/50 border border-slate-200 rounded focus:border-red-500 outline-none"
+                                                autoComplete="off"
+                                            />
+                                        </div>
+
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">内容 <span className="text-red-500 text-xs">*</span></label>
+                                        <textarea
+                                            name="content"
+                                            value={formData.content}
+                                            onChange={handleInputChange}
+                                            rows={8}
+                                            placeholder="報告の詳細や状況を入力してください..."
+                                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-y"
+                                            autoComplete="off"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">今後の対応・依頼事項</label>
+                                    <textarea
+                                        name="nextAction"
+                                        value={formData.nextAction}
+                                        onChange={handleInputChange}
+                                        rows={2}
+                                        placeholder="例：引き続き警戒にあたる"
+                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 outline-none resize-none text-sm"
+                                        autoComplete="off"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">期限・時間指定（任意）</label>
+                                    <textarea
+                                        name="deadline"
+                                        value={formData.deadline}
+                                        onChange={handleInputChange}
+                                        rows={2}
+                                        placeholder="例：本日13:00、現場引き揚げまで"
+                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 outline-none resize-none text-sm"
+                                        autoComplete="off"
+                                    />
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-4 h-fit">
+                            <div className="flex items-center justify-between mb-2">
+                                <h2 className="font-bold text-slate-700 flex items-center gap-2">
+                                    <Send className="w-4 h-4" />
+                                    生成テキスト
+                                </h2>
+                                <div className="flex gap-2">
+                                    <span className="text-xs text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded">
+                                        文字数: {generatedText.length}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-800 rounded-xl overflow-hidden shadow-xl flex flex-col border border-slate-700">
+                                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700 bg-slate-900">
+                                    <span className="text-xs text-slate-400 font-mono flex items-center gap-2">
+                                        <Building2 className="w-3 h-3" />
+                                        CommonApp_Paste_Area
+                                    </span>
+                                    <button
+                                        onClick={handleCopy}
+                                        className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors"
+                                    >
+                                        Copy
+                                    </button>
+                                </div>
+                                
+                                <textarea
+                                    readOnly
+                                    value={generatedText}
+                                    className="w-full h-[500px] p-5 bg-slate-800 text-slate-100 font-mono text-sm leading-relaxed outline-none resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800"
+                                />
+
+                                <div className="p-4 bg-slate-900 border-t border-slate-700">
+                                    <button
+                                        onClick={handleCopy}
+                                        className={`
+                                            w-full flex items-center justify-center gap-2 py-3 rounded-lg font-bold transition-all duration-200
+                                            ${copyStatus === 'copied' 
+                                                ? 'bg-green-600 text-white' 
+                                                : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/20'}
+                                        `}
+                                    >
+                                        {copyStatus === 'copied' ? (
+                                            <>
+                                                <CheckCircle2 className="w-5 h-5" />
+                                                コピー完了
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="w-5 h-5" />
+                                                テキストをコピー
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-blue-50 text-blue-800 p-4 rounded-lg text-sm border border-blue-100">
+                                <p className="font-bold mb-1 flex items-center gap-2">
+                                <Info className="w-4 h-4" />
+                                ヒント
+                                </p>
+                                <p className="opacity-90 text-xs leading-relaxed">
+                                発生場所に「住所」や「建物名」を入力すると、プレビューの下に自動で地図が表示されます。URL（http...）を入力した場合は地図が表示されませんのでご注意ください。
+                                </p>
+                            </div>
+
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
