@@ -133,7 +133,6 @@
         const Clock = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>} />;
         const HelpCircle = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>} />;
         const Activity = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>} />;
-        /* Mapアイコンコンポーネント削除（グローバルMapオブジェクトとの競合回避のため） */
         const X = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>} />;
         const ChevronDown = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<path d="m6 9 6 6 6-6"/>} />;
         const ChevronUp = ({ className, onClick }) => <Icon className={className} onClick={onClick} path={<path d="m18 15-6-6-6 6"/>} />;
@@ -761,17 +760,6 @@ ${formData.deadline}
                                     </button>
                                 </div>
                             </div>
-                            
-                            <div className="bg-blue-50 text-blue-800 p-4 rounded-lg text-sm border border-blue-100">
-                                <p className="font-bold mb-1 flex items-center gap-2">
-                                <Info className="w-4 h-4" />
-                                ヒント
-                                </p>
-                                <p className="opacity-90 text-xs leading-relaxed">
-                                発生場所に「住所」や「建物名」を入力すると、プレビューの下に自動で地図が表示されます。URL（http...）を入力した場合は地図が表示されませんのでご注意ください。
-                                </p>
-                            </div>
-
                         </div>
                     </main>
                 </div>
