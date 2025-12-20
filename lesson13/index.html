@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国民保護法 特別研修 e-Learning</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .font-serif {
+            font-family: 'Noto Serif JP', serif;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 selection:bg-amber-200 selection:text-amber-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- アイコンコンポーネント (Lucideの代わり) ---
+        const CheckCircle = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        );
+        const XCircle = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        );
+        const AlertCircle = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        );
+        const RefreshCw = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        );
+        const BookOpen = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        );
+        const Award = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+        );
+        const ChevronRight = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"></polyline></svg>
+        );
+
+        const NationalProtectionElearning = () => {
+            // --- 状態管理 ---
+            const [gameState, setGameState] = useState('start'); // start, quiz, result
+            const [currentQuestions, setCurrentQuestions] = useState([]);
+            const [userAnswers, setUserAnswers] = useState({});
+            const [isRetry, setIsRetry] = useState(false);
+            const [score, setScore] = useState(0);
+
+            // --- 定数・データ ---
+            const allQuestions = [
+                // 第1章
+                { id: 1, chapter: "第1章", q: "国民保護法の目的として誤っているものはどれですか？", options: ["武力攻撃から国民の生命、身体及び財産を保護する", "武力攻撃が国民生活等に及ぼす影響を最小にする", "武力攻撃事態において敵対勢力を速やかに鎮圧する", "国、地方公共団体、指定公共機関等の責務を定める"], correct: 2, exp: "国民保護法の目的は、国民の保護のための措置を的確かつ迅速に実施し、国全体の態勢を整備することにあり、敵勢力の鎮圧は自衛隊法等の範疇であり含まれません。" },
+                { id: 2, chapter: "第1章", q: "国民保護における「三つの柱」に含まれないものはどれですか？", options: ["避難", "救援", "防衛", "武力攻撃災害への対処"], correct: 2, exp: "国や地方公共団体の重要な役割は、「避難」、「救援」、「武力攻撃に伴う被害の最小化（武力攻撃災害への対処）」の三つの柱として定められています。" },
+                { id: 3, chapter: "第1章", q: "国民保護法が施行されたのはいつですか？", options: ["平成15年（2003年）6月", "平成16年（2004年）9月", "平成17年（2005年）3月", "平成23年（2011年）3月"], correct: 1, exp: "国民保護法は2004年（平成16年）6月に成立し、同年9月17日から施行されました。" },
+                { id: 4, chapter: "第1章", q: "「事態対処法」において、有事法制全体の中核として位置付けられている法律は何ですか？", options: ["事態対処法", "国民保護法", "災害対策基本法", "消防組織法"], correct: 0, exp: "事態対処法は、有事法制全体の中核として位置付けられる法律です。" },
+                { id: 5, chapter: "第1章", q: "武力攻撃事態において、国民の自由と権利を制限する場合の原則はどれですか？", options: ["公共の福祉のためであれば無制限に制限できる", "必要最小限のものに限り、公正かつ適正な手続の下に行う", "対策本部長の判断により、手続なしで制限できる", "憲法により、いかなる場合も制限は認められない"], correct: 1, exp: "日本国憲法が保障する自由と権利の制限は、武力攻撃事態等に対処するため必要最小限のものに限られ、かつ、公正かつ適正な手続の下に行わなければならないとされています。" },
+                { id: 6, chapter: "第1章", q: "政府が武力攻撃事態等に備えてあらかじめ定める基本的な指針を何と呼びますか？", options: ["国民保護計画", "基本指針", "避難実施要領", "防災基本計画"], correct: 1, exp: "政府は、武力攻撃事態等に備えて、国民の保護のための措置に関してあらかじめ定める基本的な指針（基本指針）を策定します。" },
+                { id: 7, chapter: "第1章", q: "市町村長が作成する国民保護に関する計画を何と呼びますか？", options: ["市町村国民保護計画", "市町村地域防災計画", "市町村国民保護業務計画", "市町村避難マニュアル"], correct: 0, exp: "市町村長は、都道府県知事に協議し、当該市町村の区域に係る「市町村国民保護計画」を作成します。" },
+                { id: 8, chapter: "第1章", q: "都道府県知事が作成する国民保護に関する計画を何と呼びますか？", options: ["都道府県国民保護計画", "都道府県地域防災計画", "都道府県国民保護業務計画", "都道府県防衛計画"], correct: 0, exp: "都道府県知事は、総務大臣を経由して内閣総理大臣に協議し、当該都道府県の区域に係る「都道府県国民保護計画」を作成します。" },
+                { id: 9, chapter: "第1章", q: "放送事業者や運送事業者などが作成する計画を何と呼びますか？", options: ["国民保護計画", "国民保護業務計画", "企業避難計画", "BCP（事業継続計画）"], correct: 1, exp: "指定公共機関及び指定地方公共機関は、国民保護措置の内容及び実施方法に関して「国民保護業務計画」を作成します。" },
+                { id: 10, chapter: "第1章", q: "国民保護法上の事務について、地方公共団体の事務の性格は何ですか？", options: ["自治事務", "第一号法定受託事務", "団体事務", "委任事務"], correct: 1, exp: "国民保護法により地方公共団体が処理することとされている事務は、都道府県警察が処理するものを除き、「第一号法定受託事務」とされています。" },
+                { id: 11, chapter: "第1章", q: "国民保護計画を作成する際に、都道府県知事や市町村長が諮問する機関は何ですか？", options: ["防災会議", "国民保護協議会", "危機管理委員会", "安全保障会議"], correct: 1, exp: "都道府県知事や市町村長は、計画の作成に当たって、関係機関の代表者等からなる「国民保護協議会」に諮問しなければなりません。" },
+                { id: 12, chapter: "第1章", q: "「指定公共機関」に該当しないものはどれですか？", options: ["日本放送協会（NHK）", "日本赤十字社", "日本銀行", "消防本部"], correct: 3, exp: "指定公共機関には、独立行政法人、日本銀行、赤十字社、NHK、電気・ガス等の公益的事業者が含まれますが、消防本部は地方公共団体の機関です。" },
+                { id: 13, chapter: "第1章", q: "国民保護法における「武力攻撃」の定義は何ですか？", options: ["国内での大規模テロ行為", "不審船による領海侵入", "日本国に対する外部からの武力攻撃", "サイバー攻撃による重要インフラの停止"], correct: 2, exp: "武力攻撃とは、日本国に対する外部からの武力攻撃をいいます。" },
+                { id: 14, chapter: "第1章", q: "「武力攻撃事態」の説明として正しいものはどれですか？", options: ["武力攻撃が発生した事態、または発生する明白な危険が切迫している事態", "事態が緊迫し、武力攻撃が予測される事態", "武力攻撃の手段に準ずる手段で多数の人を殺傷する行為が発生した事態", "災害対策基本法が適用される大規模な自然災害事態"], correct: 0, exp: "武力攻撃事態とは、武力攻撃が発生した事態、または発生する明白な危険が切迫していると認められる事態を指します。" },
+                { id: 15, chapter: "第1章", q: "「武力攻撃予測事態」の説明として正しいものはどれですか？", options: ["武力攻撃が発生した後の事態", "武力攻撃事態には至っていないが、事態が緊迫し武力攻撃が予測される事態", "大規模テロが発生する可能性が高い事態", "避難指示が解除された後の事態"], correct: 1, exp: "武力攻撃予測事態とは、武力攻撃事態には至っていないが、事態が緊迫し、武力攻撃が予測されるに至った事態をいいます。" },
+                
+                // 第2章
+                { id: 16, chapter: "第2章", q: "Jアラート（全国瞬時警報システム）とはどのようなシステムですか？", options: ["火災の発生を各家庭の報知器で知らせるシステム", "緊急情報を人工衛星等で送信し、市町村の防災行政無線等を自動起動させるシステム", "消防職員の参集をメールで一斉に指示するシステム", "避難所の空き状況をリアルタイムで公開するシステム"], correct: 1, exp: "Jアラートは、弾道ミサイル攻撃情報や緊急地震速報等の緊急情報を、人工衛星等を通じて瞬時に住民等に伝達するシステムです。" },
+                { id: 17, chapter: "第2章", q: "Jアラートにおいて「国民保護に関する情報」を送信するのはどこですか？", options: ["気象庁", "内閣官房", "総務省消防庁", "防衛省"], correct: 1, exp: "弾道ミサイル攻撃に関する情報など国民保護に関する情報は内閣官房から、消防庁の設備を経由して全国に送信されます。" },
+                { id: 18, chapter: "第2章", q: "Jアラートにおいて「防災気象情報」を送信するのはどこですか？", options: ["内閣府", "気象庁", "厚生労働省", "国土交通省"], correct: 1, exp: "緊急地震速報、津波警報、気象警報などの防災気象情報は気象庁から送信されます。" },
+                { id: 19, chapter: "第2章", q: "Jアラートの情報伝達ルートについて、正しい組み合わせはどれですか？", options: ["人工衛星ルート、地上回線ルート", "インターネットルートのみ", "電話回線ルートのみ", "ラジオ放送ルートのみ"], correct: 0, exp: "Jアラートは、人工衛星及び地上回線を通じて緊急情報を送信する多重化されたシステムです。" },
+                { id: 20, chapter: "第2章", q: "Jアラートと連携し、携帯電話に緊急情報を配信するサービスを何と呼びますか？", options: ["Lアラート", "緊急速報メール（エリアメール）", "消防メール", "防災アプリ"], correct: 1, exp: "消防庁は携帯電話事業者と連携し、Jアラート情報を緊急速報メールとして国民へ直接伝達しています。" },
+                { id: 21, chapter: "第2章", q: "Jアラートによる自動起動の対象に含まれないものはどれですか？", options: ["防災行政無線（同報系）", "登録制メール", "コミュニティ放送", "消防車両のサイレン"], correct: 3, exp: "Jアラートは防災行政無線、音声告知端末、コミュニティ放送、登録制メール等を自動起動させますが、個別の消防車両のサイレンは対象外です。" },
+                { id: 22, chapter: "第2章", q: "外国人旅行者向けにJアラート情報を配信する多言語アプリの名称は何ですか？", options: ["Japan Search", "Safety tips", "Emergency Alert", "NHK World"], correct: 1, exp: "観光庁監修の外国人旅行者向け災害時情報提供アプリ「Safety tips」で、国民保護情報の多言語配信が可能です。" },
+                { id: 23, chapter: "第2章", q: "消防庁が実施しているJアラートの導通試験の頻度はどれくらいですか？", options: ["毎日", "毎月", "毎年", "5年に1回"], correct: 1, exp: "消防庁では、全てのJアラート情報受信機関を対象とした導通試験を毎月実施しています。" },
+                { id: 24, chapter: "第2章", q: "弾道ミサイル情報が伝達された際、屋外にいる場合に取るべき行動はどれですか？", options: ["その場に立ち止まって空を見上げる", "近くの木造住宅の陰に隠れる", "近くの建物（できれば頑丈な建物）の中、又は地下に避難する", "広い公園の中央に移動して地面に伏せる"], correct: 2, exp: "屋外にいる場合は、近くの建物（できればコンクリート造り等の堅ろうな建物）の中又は地下に避難することが求められます。" },
+                { id: 25, chapter: "第2章", q: "弾道ミサイル情報が伝達された際、屋内にいる場合に取るべき行動はどれですか？", options: ["直ちに屋外に出て広い場所へ移動する", "全ての窓を開けて換気を良くする", "窓から離れるか、窓のない部屋に移動する", "2階以上の高い場所に移動する"], correct: 2, exp: "屋内にいる場合は、爆風によるガラス破片等の被害を避けるため、できるだけ窓から離れ、できれば窓のない部屋に移動します。" },
+                { id: 26, chapter: "第2章", q: "弾道ミサイル情報が伝達された際、近くに建物がない場合に取るべき行動はどれですか？", options: ["高い木に登って様子を見る", "そのまま全速力で走り続ける", "物陰に身を隠すか、地面に伏せて頭部を守る", "最寄りの川に飛び込んで身を隠す"], correct: 2, exp: "近くに適当な建物がない場合は、物陰に身を隠すか、地面に伏せて頭部を守る行動を取ります。" },
+                { id: 27, chapter: "第2章", q: "Jアラートの情報伝達試験における不具合の主な原因として挙げられていないものはどれですか？", options: ["受信機の設定誤り", "配線不良", "関係機器の電源脱落", "衛星の軌道ずれ"], correct: 3, exp: "試験の結果、不具合の原因は設定誤り、電源脱落、配線不良等の保守管理上の問題が主因でした。衛星の軌道ずれは挙げられていません。" },
+                { id: 28, chapter: "第2章", q: "Jアラートが自動起動させる「国民保護サイレン」の特徴として正しいものはどれですか？", options: ["火災出動のサイレンと同じ音である", "住民に安心感を与えるメロディである", "武力攻撃が迫っている事態を伝えるための特別なサイレン音である", "津波警報のサイレン音と全く同じである"], correct: 2, exp: "国民保護サイレンは、武力攻撃が迫っている、又は発生したと認められる場面で鳴らされる、注意喚起のための特別なサイレン音です。" },
+                { id: 29, chapter: "第2章", q: "Jアラートの「全国一斉情報伝達試験」は、近年どの程度の頻度で実施されていますか？", options: ["毎年1回", "概ね四半期ごとに1回", "毎月1回", "試験は実施されていない"], correct: 1, exp: "近年、自然災害が多発していること等を踏まえ、平成30年度からは四半期ごとに試験を実施しています。" },
+                { id: 30, chapter: "第2章", q: "Lアラート（災害情報共有システム）を活用して提供される情報はどれですか？", options: ["消防職員の給与情報", "テレビ、ラジオ、スマホアプリを通じた弾道ミサイル情報等", "各自治体のふるさと納税情報", "消防学校の入校案内"], correct: 1, exp: "民間事業者がLアラートを活用し、テレビやスマートフォンアプリ等を通じてJアラートの弾道ミサイル情報等を提供しています。" },
+
+                // 第3章
+                { id: 31, chapter: "第3章", q: "基本指針に示されている「武力攻撃事態の4類型」に含まれないものはどれですか？", options: ["着上陸侵攻", "弾道ミサイル攻撃", "ゲリラ・特殊部隊による攻撃", "サイバーテロ攻撃"], correct: 3, exp: "武力攻撃事態の4類型は「着上陸侵攻」、「ゲリラ・特殊部隊による攻撃」、「弾道ミサイル攻撃」、「航空攻撃」です。サイバーテロは含まれません。" },
+                { id: 32, chapter: "第3章", q: "「着上陸侵攻」の特徴として正しいものはどれですか？", options: ["被害範囲が狭く、短時間で終了する", "沿岸部が侵攻目標となりやすく、被害が広範囲かつ長期に及ぶ", "事前の兆候察知が不可能である", "屋内避難のみで全ての対応が完了する"], correct: 1, exp: "着上陸侵攻は沿岸部が目標となりやすく、被害が広範囲で比較的長期に及ぶことが予想されます。" },
+                { id: 33, chapter: "第3章", q: "「ゲリラや特殊部隊による攻撃」の留意点はどれですか？", options: ["数ヶ月前から準備期間があるため、余裕を持って避難できる", "事前の予測が困難で突発的であり、一時的な屋内避難が必要となる", "必ず事前に宣戦布告がある", "常に大規模な地上部隊による侵攻を伴う"], correct: 1, exp: "ゲリラ攻撃等は突発的で、攻撃当初は屋内に一時避難させ、その後適切に移動させる対応が取られます。" },
+                { id: 34, chapter: "第3章", q: "「弾道ミサイル攻撃」において最も重要な対応はどれですか？", options: ["長距離の徒歩避難", "迅速な情報伝達と、近傍の堅ろうな建物や地下への避難", "全住民の県外への一斉輸送", "攻撃目標の完全な特定を待ってからの避難指示"], correct: 1, exp: "短時間で着弾するため、迅速な情報伝達と被害の局限化（屋内・地下避難）が重要です。" },
+                { id: 35, chapter: "第3章", q: "「緊急対処事態」の想定される4類型に含まれないものはどれですか？", options: ["原子力事業所等に対する攻撃", "大規模集客施設等に対する攻撃", "サリン等化学剤の大量散布", "河川の自然氾濫による浸水被害"], correct: 3, exp: "緊急対処事態はテロ等の武力攻撃に準ずる行為を指し、自然現象による災害は含まれません。" },
+                { id: 36, chapter: "第3章", q: "「武力攻撃原子力災害」が発生した場合、原則としてどの計画に従って措置を講じますか？", options: ["防衛計画", "防災基本計画（原子力災害対策編）", "森林火災対策計画", "感染症対策計画"], correct: 1, exp: "武力攻撃原子力災害への対処は、原則として「防災基本計画（原子力災害対策編）」の定めに準じた措置を講じます。" },
+                { id: 37, chapter: "第3章", q: "「航空攻撃」に対する避難措置の指示の考え方はどれですか？", options: ["攻撃目標を特定することが困難なため、広範囲に屋内避難を指示する", "1箇所の避難所に全住民を集める", "車両による長距離移動を推奨する", "事前の兆候が100%把握できるため、ピンポイントで指示する"], correct: 0, exp: "航空攻撃は目標特定が困難なため、目標地を限定せずに屋内避難等を広範囲に指示する必要があります。" },
+                { id: 38, chapter: "第3章", q: "「生活関連等施設」に該当しないものはどれですか？", options: ["原子力発電所", "ダム", "一般の個人住宅", "鉄道施設"], correct: 2, exp: "生活関連等施設とは、安全を確保しなければ国民生活に著しい支障を及ぼす恐れがある施設（発電所、ダム、浄水施設等）を指します。" },
+                { id: 39, chapter: "第3章", q: "武装工作員が潜伏している可能性がある場合、関係機関の連携として正しいものはどれですか？", options: ["消防単独で制圧に向かう", "警察・自衛隊が警戒を実施し、消防は安全が確保された段階で救助等を行う", "住民に武装して自衛するよう指示する", "報道機関に現場のライブ中継を依頼するのみとする"], correct: 1, exp: "ゲリラ攻撃等では、警察・自衛隊と連携し、安全確保措置を講じた上で消防活動等を行います。" },
+                { id: 40, chapter: "第3章", q: "NBC攻撃を受けた際、避難住民を誘導する際の留意点はどれですか？", options: ["風下に向かって避難させる", "風下方向を避け、皮膚の露出を抑えた格好をさせる", "マスクは不要と伝える", "地面に近い場所を歩かせる"], correct: 1, exp: "NBC攻撃時は、風下を避け、皮膚の露出を極力抑え、ハンカチ等で口・鼻を覆わせるなどの留意が必要です。" },
+                { id: 41, chapter: "第3章", q: "着上陸侵攻が予測される際、離島において特に重要となる支援は何ですか？", options: ["国による交通手段（航空・海上輸送力）の確保の支援", "離島内での地下シェルターの完全自力建設", "住民への武器貸与", "観光客の誘致継続"], correct: 0, exp: "離島における広域避難には、航空機や船舶による輸送力の確保が不可欠であり、国による支援が重要です。" },
+                { id: 42, chapter: "第3章", q: "「ダーティボム（汚い爆弾）」とは何ですか？", options: ["泥水を散布する爆弾", "放射性物質を混入させた爆弾", "悪臭を放つガス爆弾", "不発弾の別称"], correct: 1, exp: "ダーティボムは、放射性物質を混入させた爆弾の爆発による放射能の拡散を指します。" },
+                { id: 43, chapter: "第3章", q: "武力攻撃事態等において、消防庁長官が地方公共団体に対して行うことができる法的行為は何ですか？", options: ["要請のみ", "指示", "勧告のみ", "助言のみ"], correct: 1, exp: "消防庁長官は、武力攻撃事態等において、特に緊急を要する場合等に消防の応援等に関し「指示」を行うことができます。" },
+                { id: 44, chapter: "第3章", q: "国民保護事案において、消防職員の活動で「自然災害時」よりも特に強調されている義務は何ですか？", options: ["24時間連続活動の義務", "職員の安全確保への配慮義務", "敵対勢力の逮捕義務", "全ての個人の財産を完全に復旧させる義務"], correct: 1, exp: "武力攻撃事態等の特殊性から、通常の災害に比べて消防職員の安全確保には特に注意が払われる（安全確保配慮義務）ことになっています。" },
+                { id: 45, chapter: "第3章", q: "緊急対処事態が発生した際、市町村対策本部が設置されるまでの流れはどうなりますか？", options: ["市町村が独自に判断して直ちに設置する", "政府の閣議決定に基づき、設置すべき市町村の指定を受けて設置する", "都道府県知事が全市町村に強制的に設置させる", "住民投票の結果を受けて設置する"], correct: 1, exp: "対策本部を設置すべき都道府県及び市町村は、政府の閣議決定により指定され、その通知を受けて設置されます。" },
+
+                // 第4章
+                { id: 46, chapter: "第4章", q: "国民保護法における消防の任務として正しいものはどれですか？", options: ["武力攻撃の排除と敵勢力の撃退", "国民の生命・身体・財産を武力攻撃による火災から保護し、被害を防除・軽減する", "被災した建物の完全な再建工事の実施", "避難住民に対する恒久的な住宅の提供"], correct: 1, exp: "消防は、その施設及び人員を活用し、武力攻撃による火災から保護し、武力攻撃災害を防除・軽減することを任務とします。" },
+                { id: 47, chapter: "第4章", q: "避難住民の誘導に際して、消防吏員ができる法的措置（警察官がいない場合）はどれですか？", options: ["住民の逮捕", "危険な場所への立入禁止や退去、その他の措置", "住民の私有財産の没収", "外国語以外の公用語の使用制限"], correct: 1, exp: "消防吏員は、警察官がその場にいない場合に、危険な場所への立入禁止や退去命令等の措置を講じることができます。" },
+                { id: 48, chapter: "第4章", q: "「緊急消防援助隊」が国民保護措置で出動する際、平時と異なる手続きはどれですか？", options: ["消防庁長官の「指示」による出動が可能となる", "装備は全て自衛隊のものを使用する", "出動費用は全て消防職員の自己負担となる", "現場での指揮権が警察署長に完全に移行する"], correct: 0, exp: "国民保護事態では、消防庁長官の「指示」により緊急消防援助隊を派遣することが法的に可能です。" },
+                { id: 49, chapter: "第4章", q: "消防団が国民保護において期待されている役割はどれですか？", options: ["武器を用いた戦闘行動", "地域とのつながりを活かした住民の避難誘導、情報の伝達", "高度な化学剤の成分分析", "政府の外交交渉の補助"], correct: 1, exp: "消防団は、地域に密着した特性を活かし、警報の伝達や避難住民の誘導等において大きな役割を担うことが期待されています。" },
+                { id: 50, chapter: "第4章", q: "国民保護措置に従事する消防職員が着用・表示できるマーク（特殊標章）のデザインは？", options: ["白地に赤の十字", "オレンジ色地に青の正三角形", "青地に白の五芒星", "黄色地に黒の稲妻"], correct: 1, exp: "国際的な特殊標章として、オレンジ色地に青の正三角形の図案が定められています。" },
+                { id: 51, chapter: "第4章", q: "特殊標章を使用できる事態はどれですか？", options: ["武力攻撃事態等（緊急対処事態は対象外）", "通常の火災現場", "交通事故の救助現場", "全ての緊急対処事態"], correct: 0, exp: "特殊標章は、ジュネーヴ諸条約に基づき武力攻撃事態等において使用されます。消防庁の資料では緊急対処事態は対象外とされています。" },
+                { id: 52, chapter: "第4章", q: "負傷者の搬送において、多数の傷病者が発生した際に行う優先順位付けを何と呼びますか？", options: ["スク選別", "トリアージ", "カテゴライズ", "優先受付"], correct: 1, exp: "多数の負傷者が発生した際、治療の優先順位を決定する「トリアージ」が行われます。" },
+                { id: 53, chapter: "第4章", q: "消防機関が行う「安否情報の収集」の対象に含まれないものはどれですか？", options: ["避難住民の氏名", "負傷した住民の状況", "死亡した住民の死体の所在", "住民の銀行口座番号"], correct: 3, exp: "安否情報は氏名、住所、負傷状況、死体の所在等、個人を識別するための情報が含まれますが、口座番号等は含まれません。" },
+                { id: 54, chapter: "第4章", q: "NBC災害において、救助隊員が着用する「陽圧式防護衣」の役割は何ですか？", options: ["隊員の体温を下げる", "特殊素材と内部加圧により、外界からの有害物質を完全に遮断する", "銃弾を跳ね返す", "水中での活動を可能にする"], correct: 1, exp: "陽圧式防護衣は、内部の圧力を高く保つことで、あらゆる有害物質の侵入を防ぎます。" },
+                { id: 55, chapter: "第4章", q: "国民保護措置に従事する職員に対し、交付が推奨されている書類は何ですか？", options: ["身分証明書", "外交官旅券", "住民票の写し", "運転免許証"], correct: 0, exp: "武力攻撃事態等において、国民保護措置に係る職務を行う者に対し、特殊標章とともに国際的な「身分証明書」を交付できます。" },
+
+                // 第5章
+                { id: 56, chapter: "第5章", q: "NBC災害の「N」が指すものはどれですか？", options: ["自然災害（Natural Disaster）", "核燃料物質・放射性物質（Nuclear）", "神経ガス（Nerve Gas）", "騒音（Noise）"], correct: 1, exp: "NBCのNはNuclear（核・放射性物質）を指します。" },
+                { id: 57, chapter: "第5章", q: "NBC災害の「B」が指すものはどれですか？", options: ["生物剤（Biological）", "爆発（Blast）", "焼失（Burn）", "出血（Bleeding）"], correct: 0, exp: "NBCのBはBiological（生物剤）を指します。" },
+                { id: 58, chapter: "第5章", q: "NBC災害の「C」が指すものはどれですか？", options: ["崩壊（Collapse）", "化学物質（Chemical）", "衝突（Collision）", "通信（Communication）"], correct: 1, exp: "NBCのCはChemical（化学物質）を指します。" },
+                { id: 59, chapter: "第5章", q: "放射性物質に汚染されているかを検査するために活用する資機材はどれですか？", options: ["サーベイメータ", "リン酸エステル系検知管", "風速計", "聴診器"], correct: 0, exp: "サーベイメータは、放射性物質による汚染検査や空間線量率の測定に活用されます。" },
+                { id: 60, chapter: "第5章", q: "現場で約17万種類の気体の分析が可能な、高度なNBC資機材は何ですか？", options: ["質量分析装置", "赤外線分析装置", "酸素濃度計", "ガス検知管"], correct: 0, exp: "質量分析装置は、多数の気体の定性・定量分析が可能で、未知の化学物質の特定に有効です。" },
+                { id: 61, chapter: "第5章", q: "生物剤の有無を迅速に判別するために使用される「チケット」を用いる装置は何ですか？", options: ["生物剤検知器", "放射線測定器", "騒音計", "照度計"], correct: 0, exp: "生物剤検知器は、専用のチケットを使用して、細菌やウイルス等の有無を迅速に判別します。" },
+                { id: 62, chapter: "第5章", q: "消防隊員の身体への放射性物質による汚染や、体内への取り込みを防ぐ防護衣は何ですか？", options: ["放射能防護衣", "毒劇物防護衣", "防火衣（耐火服）", "救助服"], correct: 0, exp: "放射能防護衣は、身体への汚染や吸入による内部被ばくを防ぐために着用されます。" },
+                { id: 63, chapter: "第5章", q: "多数の負傷者を同時に除染するために使用される、テント状の設備は何ですか？", options: ["大型除染システム", "簡易宿泊テント", "救護所用エアテント", "炊き出し用テント"], correct: 0, exp: "大型除染システムは、多数の要救助者を迅速に除染し、医療機関への搬送前処理を行うための資機材です。" },
+                { id: 64, chapter: "第5章", q: "NBC災害現場における「ホットゾーン」とはどのような区域ですか？", options: ["消防隊が休憩する安全な区域", "原因物質により汚染されており、厳重な防護が必要な区域", "報道機関の取材拠点", "住民の避難施設"], correct: 1, exp: "ホットゾーンは、汚染や危険がある最前線の区域で、ゾーニングにおいて最も危険なエリアを指します。" },
+                { id: 65, chapter: "第5章", q: "化学剤（サリン等）の検知において、特に有効な資機材はどれですか？", options: ["リン酸エステル系検知管", "空間線量率計", "水質検査セット", "砂袋"], correct: 0, exp: "サリン等の神経剤はリン酸エステル系化合物であり、専用の検知管での特定が有効です。" },
+
+                // 第6章
+                { id: 66, chapter: "第6章", q: "「避難実施要領」に定めるべき事項として、国民保護法第61条に規定されていないものはどれですか？", options: ["避難の経路", "避難の手段", "敵勢力との交渉方法", "関係職員の配置"], correct: 2, exp: "避難実施要領は、経路、手段、職員の配置など避難の方法を定めるもので、交渉は含まれません。" },
+                { id: 67, chapter: "第6章", q: "市町村が平時から準備しておくべき、避難のひな型を何と呼びますか？", options: ["避難実施要領のパターン", "防災行動マニュアル", "地区避難計画", "避難所運営ルール"], correct: 0, exp: "基本指針に基づき、市町村は複数の「避難実施要領のパターン」をあらかじめ作成するよう努めることとされています。" },
+                { id: 68, chapter: "第6章", q: "避難住民の誘導を指揮するのは誰ですか？", options: ["消防署長", "市町村長", "都道府県知事", "自衛隊長"], correct: 1, exp: "市町村長は、避難の指示があったときに、自ら職員や消防を指揮し、避難住民の誘導を行います。" },
+                { id: 69, chapter: "第6章", q: "避難実施要領を作成する際、協議に参画させるべき関係機関に含まれないものはどれですか？", options: ["消防機関", "警察機関", "自衛隊", "近隣の商店街振興組合のみ"], correct: 3, exp: "避難実施要領の作成には、消防、警察、自衛隊、運送事業者等の実動機関との連携が不可欠です。" },
+                { id: 70, chapter: "第6章", q: "要避難地域内に取り残された住民がいないかを確認する作業を何と呼びますか？", options: ["残留者の確認", "点呼", "住民総点検", "所在確認調査"], correct: 0, exp: "避難誘導の最終段階として、広報車や戸別訪問による「残留者の確認」が重要です。" },
+                { id: 71, chapter: "第6章", q: "要配慮者（高齢者、障害者等）の避難において、消防庁が活用を推奨している計画は何ですか？", options: ["避難支援プラン（災害時要援護者避難支援プラン）", "個別学習計画", "リハビリテーション計画", "住宅再建計画"], correct: 0, exp: "市町村は、国民保護においても自然災害時の「避難支援プラン」を活用し、重点的な対策を講じることが求められます。" },
+                { id: 72, chapter: "第6章", q: "避難施設を指定する権限を持っているのは誰ですか？", options: ["都道府県知事（及び指定都市の長）", "消防庁長官", "内閣総理大臣", "市町村長"], correct: 0, exp: "避難施設の指定は、都道府県知事（及び指定都市の長）が行うこととなっています。" },
+                { id: 73, chapter: "第6章", q: "「緊急一時避難施設」として指定を促進している場所はどこですか？", options: ["木造の平屋住宅", "コンクリート造りの堅ろうな建築物や地下施設", "公園の砂場", "海岸沿いのキャンプ場"], correct: 1, exp: "爆風等からの直接被害を軽減するため、堅ろうな建築物や地下街、地下駅舎等の指定が優先されています。" },
+                { id: 74, chapter: "第6章", q: "避難住民の安否情報について、国民から照会があった場合、地方公共団体の長が行うべき対応はどれですか？", options: ["プライバシー保護のため、一切回答しない", "個人情報の保護に配慮しつつ、速やかに回答する", "手数料を徴収して回答する", "全ての情報をそのままインターネットに公開する"], correct: 1, exp: "地方公共団体の長は、安否情報の照会があったときは、速やかに回答しなければならないと定められています。" },
+                { id: 75, chapter: "第6章", q: "安否情報システムにおいて収集される情報の項目に含まれないものはどれですか？", options: ["氏名", "生年月日", "性別", "過去の犯罪歴"], correct: 3, exp: "安否情報は個人の識別や負傷状況等に関するもので、犯罪歴等の無関係な個人情報は含まれません。" },
+
+                // 第7章
+                { id: 76, chapter: "第7章", q: "近年、国民保護訓練において重点が置かれているシナリオはどれですか？", options: ["大規模イベント等を狙ったテロ対策（化学剤散布、爆発等）", "森林火災の空中消火", "山岳遭難者の捜索", "住宅街での小規模な失火対応"], correct: 0, exp: "近年、大規模イベント（東京2020大会等）を控え、各種テロ事案を想定した訓練が重点的に実施されています。" },
+                { id: 77, chapter: "第7章", q: "消防防災分野のDX（デジタルトランスフォーメーション）として、国民保護での活用が期待されている機器は何ですか？", options: ["固定電話機", "ドローン（小型無人航空機）", "手書きの看板", "紙の地図のみ"], correct: 1, exp: "ドローンは、危険な現場の状況把握、救助、さらには避難誘導等への活用が期待されています。" },
+                { id: 78, chapter: "第7章", q: "消防庁が提供している、インターネット上で消防防災について学習できるシステムの名称は？", options: ["消防アプリ", "ｅ－カレッジ", "危機管理ポータル", "消防アカデミー"], correct: 1, exp: "消防庁は、職員や住民等がインターネットで学習できる「ｅ－カレッジ」を運営しています。" },
+                { id: 79, chapter: "第7章", q: "最近の北朝鮮によるミサイル発射事案を受けて、消防庁が強化している取り組みはどれですか？", options: ["消防署の24時間閉鎖", "Jアラートの一斉点検と四半期ごとの試験実施", "全ての消防車の色の変更", "消防団の完全廃止"], correct: 1, exp: "ミサイル事案の頻発を受け、Jアラートの安定運用と確実な情報伝達のための点検・試験が強化されています。" },
+                { id: 80, chapter: "第7章", q: "大規模災害や武力攻撃災害において、各機関の部隊が現場で活動を調整するために設置される場所はどこですか？", options: ["現地調整所", "消防署の受付", "市役所の売店", "最寄りの警察広報課"], correct: 0, exp: "関係機関（消防、警察、自衛隊等）が現場で活動を円滑に調整するため、必要に応じて「現地調整所」が設置されます。" },
+            ];
+
+            // --- ロジック関数 ---
+
+            // 問題をシャッフルして指定数だけ取得する関数
+            const startQuiz = (count) => {
+                const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+                setCurrentQuestions(shuffled.slice(0, count));
+                setUserAnswers({});
+                setScore(0);
+                setGameState('quiz');
+            };
+
+            // ユーザーの回答を記録
+            const handleAnswer = (questionIndex, optionIndex) => {
+                setUserAnswers(prev => ({
+                    ...prev,
+                    [questionIndex]: optionIndex
+                }));
+            };
+
+            // 採点処理
+            const calculateScore = () => {
+                let correctCount = 0;
+                currentQuestions.forEach((q, index) => {
+                    if (userAnswers[index] === q.correct) {
+                        correctCount++;
+                    }
+                });
+                setScore(correctCount);
+                setGameState('result');
+            };
+
+            // 初回スタート
+            const handleInitialStart = () => {
+                setIsRetry(false);
+                startQuiz(10);
+            };
+
+            // 再挑戦（5問）
+            const handleRetry = () => {
+                setIsRetry(true);
+                startQuiz(5);
+            };
+
+            // トップに戻る（完全リセット）
+            const handleReset = () => {
+                setGameState('start');
+                setIsRetry(false);
+            };
+
+            // --- 表示コンポーネント ---
+
+            // 1. スタート画面
+            const StartScreen = () => (
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 animate-fade-in">
+                    <div className="mb-6 p-4 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 border-4 border-amber-300 shadow-xl">
+                        <Award size={64} className="text-amber-700" />
+                    </div>
+                    <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-800 mb-4 tracking-wide">
+                        国民保護法 <span className="text-amber-600">特別研修</span>
+                    </h1>
+                    <p className="text-slate-600 mb-8 max-w-lg leading-relaxed">
+                        消防職員として必須となる国民保護法、NBC災害対応、Jアラート等の知識を問う
+                        上級eラーニングプログラムです。<br/>
+                        全80問のデータベースからランダムに出題されます。
+                    </p>
+                    
+                    <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-amber-500 mb-10 w-full max-w-md text-left">
+                        <h3 className="font-bold text-slate-800 flex items-center mb-2">
+                            <BookOpen className="w-5 h-5 mr-2 text-amber-600" />
+                            研修概要
+                        </h3>
+                        <ul className="text-sm text-slate-600 space-y-2">
+                            <li className="flex items-center"><ChevronRight size={16} className="text-amber-400 mr-1"/> 出題数：10問（初回）</li>
+                            <li className="flex items-center"><ChevronRight size={16} className="text-amber-400 mr-1"/> 合格基準：知識の定着を確認</li>
+                            <li className="flex items-center"><ChevronRight size={16} className="text-amber-400 mr-1"/> 形式：四肢択一式</li>
+                        </ul>
+                    </div>
+
+                    <button
+                        onClick={handleInitialStart}
+                        className="group relative px-10 py-4 bg-slate-800 text-white font-serif text-lg tracking-widest rounded shadow-lg overflow-hidden transition-all hover:bg-slate-700 hover:shadow-xl hover:-translate-y-1 focus:outline-none ring-2 ring-offset-2 ring-slate-800"
+                    >
+                        <span className="relative z-10 flex items-center">
+                            研修を開始する
+                            <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                        </span>
+                        <div className="absolute inset-0 h-full w-full scale-0 rounded transition-all duration-300 group-hover:scale-100 group-hover:bg-slate-700/50"></div>
+                    </button>
+                </div>
+            );
+
+            // 2. クイズ画面
+            const QuizScreen = () => {
+                // 全問回答済みかチェック
+                const isAllAnswered = currentQuestions.length > 0 && 
+                    currentQuestions.every((_, idx) => userAnswers[idx] !== undefined);
+
+                return (
+                    <div className="max-w-4xl mx-auto p-4 animate-fade-in">
+                        <div className="flex justify-between items-center mb-6 border-b border-amber-200 pb-4">
+                            <h2 className="text-xl font-serif font-bold text-slate-800">
+                                {isRetry ? "再挑戦課題" : "実力確認テスト"}
+                            </h2>
+                            <span className="text-sm font-medium px-3 py-1 bg-amber-100 text-amber-800 rounded-full border border-amber-200">
+                                全 {currentQuestions.length} 問
+                            </span>
+                        </div>
+
+                        <div className="space-y-8">
+                            {currentQuestions.map((q, qIdx) => (
+                                <div key={q.id} className="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden">
+                                    <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-baseline">
+                                        <span className="text-amber-600 font-bold text-lg mr-3">Q{qIdx + 1}.</span>
+                                        <span className="text-xs text-slate-500 font-medium px-2 py-0.5 border border-slate-300 rounded mr-3 whitespace-nowrap">
+                                            {q.chapter}
+                                        </span>
+                                        <h3 className="text-slate-800 font-medium leading-relaxed">{q.q}</h3>
+                                    </div>
+                                    <div className="p-6">
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {q.options.map((option, oIdx) => (
+                                                <button
+                                                    key={oIdx}
+                                                    onClick={() => handleAnswer(qIdx, oIdx)}
+                                                    className={`
+                                                        w-full text-left px-5 py-3 rounded border transition-all duration-200 flex items-center
+                                                        ${userAnswers[qIdx] === oIdx 
+                                                            ? 'bg-slate-800 border-slate-800 text-white shadow-md' 
+                                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-amber-300'
+                                                        }
+                                                    `}
+                                                >
+                                                    <div className={`
+                                                        w-5 h-5 rounded-full border flex items-center justify-center mr-3 flex-shrink-0
+                                                        ${userAnswers[qIdx] === oIdx ? 'border-white' : 'border-slate-300'}
+                                                    `}>
+                                                        {userAnswers[qIdx] === oIdx && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
+                                                    </div>
+                                                    <span className="text-sm md:text-base">{option}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-12 text-center pb-12">
+                            <button
+                                onClick={calculateScore}
+                                disabled={!isAllAnswered}
+                                className={`
+                                    px-12 py-4 font-serif text-lg tracking-widest rounded shadow-lg transition-all
+                                    ${isAllAnswered 
+                                        ? 'bg-amber-600 text-white hover:bg-amber-700 hover:-translate-y-1 shadow-amber-200' 
+                                        : 'bg-slate-300 text-slate-500 cursor-not-allowed'}
+                                `}
+                            >
+                                採点する
+                            </button>
+                            {!isAllAnswered && (
+                                <p className="mt-3 text-sm text-slate-500">※全ての問題に回答すると採点できます</p>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            // 3. 結果画面
+            const ResultScreen = () => {
+                const percentage = Math.round((score / currentQuestions.length) * 100);
+                const isPass = percentage >= 80;
+
+                return (
+                    <div className="max-w-4xl mx-auto p-4 animate-fade-in">
+                        {/* スコアカード */}
+                        <div className="bg-white rounded-xl shadow-xl border-t-8 border-slate-800 p-8 text-center mb-10 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300"></div>
+                            
+                            <h2 className="text-2xl font-serif font-bold text-slate-800 mb-2">研修結果報告</h2>
+                            <div className="flex items-center justify-center space-x-2 mb-6">
+                                <span className="text-slate-500 font-medium">取得スコア</span>
+                                <span className="text-5xl font-bold text-slate-800">{score}</span>
+                                <span className="text-2xl text-slate-400">/ {currentQuestions.length}</span>
+                            </div>
+
+                            <div className={`inline-flex items-center px-6 py-2 rounded-full text-sm font-bold tracking-wider mb-6 ${
+                                isPass ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'
+                            }`}>
+                                {isPass ? <CheckCircle size={18} className="mr-2"/> : <AlertCircle size={18} className="mr-2"/>}
+                                {isPass ? '優秀 (EXCELLENT)' : '再確認が必要 (REVIEW NEEDED)'}
+                            </div>
+
+                            <p className="text-slate-600 text-sm max-w-lg mx-auto leading-relaxed">
+                                {isPass 
+                                    ? "素晴らしい成績です。国民保護法制に関する深い理解が示されました。引き続き知識の維持・向上に努めてください。" 
+                                    : "不正解箇所を確認し、解説を読み込んで知識を定着させましょう。現場での判断に迷いが生じないよう、復習が重要です。"}
+                            </p>
+                        </div>
+
+                        {/* 解説一覧 */}
+                        <div className="space-y-6 mb-12">
+                            <h3 className="text-lg font-serif font-bold text-slate-800 border-b-2 border-amber-500 pb-2 inline-block mb-4">
+                                回答詳細・解説
+                            </h3>
+                            
+                            {currentQuestions.map((q, idx) => {
+                                const isCorrect = userAnswers[idx] === q.correct;
+                                return (
+                                    <div key={q.id} className={`bg-white rounded-lg border-l-4 shadow-sm p-6 ${isCorrect ? 'border-green-500' : 'border-red-500'}`}>
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex-1">
+                                                <span className="text-xs text-slate-400 block mb-1">Q{idx + 1} - {q.chapter}</span>
+                                                <h4 className="font-bold text-slate-800">{q.q}</h4>
+                                            </div>
+                                            <div className="ml-4 flex-shrink-0">
+                                                {isCorrect 
+                                                    ? <CheckCircle className="text-green-500" size={24} /> 
+                                                    : <XCircle className="text-red-500" size={24} />
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 gap-4 mb-4 bg-slate-50 p-4 rounded text-sm">
+                                            <div>
+                                                <span className="block text-xs text-slate-500 mb-1">あなたの回答</span>
+                                                <p className={`font-bold ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                                                    {q.options[userAnswers[idx]]}
+                                                </p>
+                                            </div>
+                                            {!isCorrect && (
+                                                <div>
+                                                    <span className="block text-xs text-slate-500 mb-1">正解</span>
+                                                    <p className="font-bold text-green-700">
+                                                        {q.options[q.correct]}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="text-sm text-slate-700 leading-relaxed bg-amber-50/50 p-4 rounded border border-amber-100">
+                                            <span className="font-bold text-amber-800 block mb-1">【解説・根拠】</span>
+                                            {q.exp}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* アクションボタン */}
+                        <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-6 pb-12">
+                            <button
+                                onClick={handleRetry}
+                                className="flex items-center px-8 py-3 bg-slate-800 text-white rounded shadow transition-all hover:bg-slate-700 hover:-translate-y-1 w-full md:w-auto justify-center"
+                            >
+                                <RefreshCw size={18} className="mr-2" />
+                                再挑戦する（ランダム5問）
+                            </button>
+                            
+                            <button
+                                onClick={handleReset}
+                                className="px-8 py-3 text-slate-600 bg-white border border-slate-300 rounded shadow-sm hover:bg-slate-50 w-full md:w-auto transition-colors"
+                            >
+                                トップに戻る
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-100 font-sans text-slate-900 selection:bg-amber-200 selection:text-amber-900">
+                    {/* ヘッダー */}
+                    <header className="bg-slate-900 text-white shadow-lg border-b-4 border-amber-600">
+                        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <div className="p-1.5 bg-white/10 rounded">
+                                    <BookOpen size={24} className="text-amber-400" />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-serif tracking-wider font-bold">Fire Service e-Learning</h1>
+                                    <p className="text-xs text-slate-400 uppercase tracking-widest">National Protection Act Training</p>
+                                </div>
+                            </div>
+                            <div className="hidden md:block text-xs text-slate-400 border border-slate-700 px-3 py-1 rounded">
+                                愛知県モデル・消防職員専用
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* メインコンテンツ */}
+                    <main className="pt-8 px-4">
+                        {gameState === 'start' && <StartScreen />}
+                        {gameState === 'quiz' && <QuizScreen />}
+                        {gameState === 'result' && <ResultScreen />}
+                    </main>
+
+                    {/* フッター */}
+                    <footer className="mt-auto py-8 text-center text-slate-400 text-xs border-t border-slate-200 bg-slate-100">
+                        <p>© 2025 Fire Service Personnel Training Program. All Rights Reserved.</p>
+                        <p className="mt-2">国民保護法・Jアラート・NBC災害対応 特別研修資料</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<NationalProtectionElearning />);
+    </script>
+</body>
+</html>
