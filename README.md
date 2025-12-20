@@ -150,7 +150,7 @@
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 13</div>
-      <div class="lesson-desc">訓練指導法</div>
+      <div class="lesson-desc">国民保護法</div>
       <a href="lesson13/index.html" class="button">▶ 学習する</a>
     </div>
     <div class="card">
