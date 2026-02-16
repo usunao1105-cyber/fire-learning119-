@@ -160,7 +160,7 @@
     </div>
     <div class="card">
       <div class="lesson-title">Lesson 15</div>
-      <div class="lesson-desc">リーダーシップ</div>
+      <div class="lesson-desc">胸骨圧迫評価</div>
       <a href="lesson15/index.html" class="button">▶ 学習する</a>
     </div>
   </div>
