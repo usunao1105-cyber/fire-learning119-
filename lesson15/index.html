@@ -46,7 +46,8 @@
         import { 
             Play, Pause, RotateCcw, Activity, Clock, Heart, 
             Volume2, VolumeX, Download, Copy, FileText, 
-            Zap, Syringe, ClipboardList, Stethoscope, X, Check 
+            Zap, Syringe, ClipboardList, Stethoscope, X, Check,
+            User, Users
         } from 'lucide-react';
 
         function App() {
@@ -56,6 +57,10 @@
             const [totalTime, setTotalTime] = useState(0); // Total milliseconds
             const [compressionTime, setCompressionTime] = useState(0); // Compression milliseconds
             const [logs, setLogs] = useState([]);
+            
+            // Session Info
+            const [evaluator, setEvaluator] = useState('');
+            const [student, setStudent] = useState('');
             
             // UI States
             const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -89,34 +94,37 @@
                 osc.stop(ctx.currentTime + 0.1);
             }, []);
 
-            // Sound effect for Action Buttons (Dog Bark simulation)
-            const playDogBark = useCallback(() => {
+            // Sound effect for Action Buttons (Cat Meow simulation)
+            const playCatMeow = useCallback(() => {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
                 const ctx = new AudioContext();
                 
-                // Create oscillator for the "woof" tone
+                // Create oscillator for the "meow" tone
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 
-                // Sawtooth wave for a rougher sound
-                osc.type = 'sawtooth'; // or 'triangle'
+                // Triangle wave for a softer, meow-like sound
+                osc.type = 'triangle'; 
                 
-                // Pitch envelope: Start mid-low, drop quickly
                 const now = ctx.currentTime;
-                osc.frequency.setValueAtTime(400, now); 
-                osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                const duration = 0.4; // Meow is longer than a bark
+
+                // Pitch envelope: Starts mid, goes high, then drops low (Me-ow)
+                osc.frequency.setValueAtTime(800, now); 
+                osc.frequency.linearRampToValueAtTime(1200, now + 0.1); 
+                osc.frequency.linearRampToValueAtTime(600, now + duration);
                 
-                // Volume envelope: Sharp attack, fast decay
+                // Volume envelope: Soft attack, gradual decay
                 gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.3, now + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                gain.gain.linearRampToValueAtTime(0.2, now + 0.05); // Attack
+                gain.gain.exponentialRampToValueAtTime(0.01, now + duration); // Decay
                 
                 osc.start(now);
-                osc.stop(now + 0.16);
+                osc.stop(now + duration + 0.1);
             }, []);
 
             // Show notification toast
@@ -179,18 +187,22 @@
             // Actions
             const toggleSession = () => {
                 if (!isActive) {
-                setIsActive(true);
-                if (totalTime === 0) {
-                    addLog("蘇生活動開始 (Code Blue Start)");
+                    setIsActive(true);
+                    setIsCompressing(true); // 変更: 蘇生開始と同時に圧迫も開始
+
+                    if (totalTime === 0) {
+                        addLog("蘇生活動開始 (Code Blue Start)");
+                        addLog("圧迫開始 (Compressions Started)");
+                    } else {
+                        addLog("蘇生活動再開 (Resumed)");
+                        addLog("圧迫再開 (Compressions Started)");
+                    }
+                    playCatMeow();
                 } else {
-                    addLog("蘇生活動再開 (Resumed)");
-                }
-                playDogBark();
-                } else {
-                setIsActive(false);
-                setIsCompressing(false);
-                addLog("蘇生活動中断 (Paused)");
-                playDogBark();
+                    setIsActive(false);
+                    setIsCompressing(false);
+                    addLog("蘇生活動中断 (Paused)");
+                    playCatMeow();
                 }
             };
 
@@ -216,18 +228,37 @@
                 setTotalTime(0);
                 setCompressionTime(0);
                 setLogs([]);
+                // Do not clear names on reset, usually handy to keep them for next session
                 setShowResetConfirm(false);
                 showNotification("リセットしました");
             };
 
             const handleAction = (actionName) => {
                 addLog(actionName);
-                playDogBark();
+                playCatMeow();
+            };
+
+            // Generate Log Text
+            const generateLogText = () => {
+                const header = [
+                    "--------------------------------",
+                    `評価日時: ${new Date().toLocaleString()}`,
+                    `評価者: ${evaluator || "(未入力)"}`,
+                    `受講生: ${student || "(未入力)"}`,
+                    `CCF (胸骨圧迫実施率): ${ccf}%`,
+                    `総活動時間: ${formatTime(totalTime)}`,
+                    "--------------------------------",
+                    ""
+                ].join('\n');
+
+                const body = logs.map(l => `[${l.time}] (経過: ${l.elapsed}) ${l.message}`).join('\n');
+                
+                return header + body;
             };
 
             // Export Logs
             const copyLogsToClipboard = () => {
-                const logText = logs.map(l => `[${l.time}] (経過: ${l.elapsed}) ${l.message}`).join('\n');
+                const logText = generateLogText();
                 
                 const textArea = document.createElement("textarea");
                 textArea.value = logText;
@@ -254,7 +285,7 @@
             };
 
             const downloadLogs = () => {
-                const logText = logs.map(l => `[${l.time}] (経過: ${l.elapsed}) ${l.message}`).join('\n');
+                const logText = generateLogText();
                 const blob = new Blob([logText], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -331,21 +362,51 @@
                 )}
 
                 {/* Header */}
-                <header className="mb-4 flex items-center justify-between border-b pb-4 bg-white p-4 rounded-xl shadow-sm">
-                    <div>
-                    <h1 className="text-xl font-bold flex items-center gap-2 text-slate-800">
-                        <Activity className="text-red-600" />
-                        CCF Calculator
-                    </h1>
-                    <p className="text-xs text-slate-500">胸骨圧迫実施率 & 活動記録</p>
+                <header className="mb-4 bg-white p-4 rounded-xl shadow-sm border-b">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h1 className="text-xl font-bold flex items-center gap-2 text-slate-800">
+                                <Activity className="text-red-600" />
+                                CCF Calculator
+                            </h1>
+                            <p className="text-xs text-slate-500">胸骨圧迫実施率 & 活動記録</p>
+                        </div>
+                        <button 
+                            onClick={() => setMetronomeEnabled(!metronomeEnabled)}
+                            className={`p-2 rounded-full transition-colors ${metronomeEnabled ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}
+                            title="メトロノーム (110bpm)"
+                        >
+                            {metronomeEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
+                        </button>
                     </div>
-                    <button 
-                    onClick={() => setMetronomeEnabled(!metronomeEnabled)}
-                    className={`p-2 rounded-full transition-colors ${metronomeEnabled ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}
-                    title="メトロノーム (110bpm)"
-                    >
-                    {metronomeEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
-                    </button>
+
+                    {/* Evaluator & Student Inputs */}
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                        <div>
+                            <label className="flex items-center gap-1 text-xs font-bold text-slate-500 mb-1">
+                                <User size={12} /> 評価者 (Evaluator)
+                            </label>
+                            <input 
+                                type="text" 
+                                value={evaluator} 
+                                onChange={(e) => setEvaluator(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+                                placeholder="名前を入力"
+                            />
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-1 text-xs font-bold text-slate-500 mb-1">
+                                <Users size={12} /> 受講生 (Student)
+                            </label>
+                            <input 
+                                type="text" 
+                                value={student} 
+                                onChange={(e) => setStudent(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+                                placeholder="名前を入力"
+                            />
+                        </div>
+                    </div>
                 </header>
 
                 {/* Main Timer Display Area */}
