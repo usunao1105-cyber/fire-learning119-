@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CCF Calculator & CPR Log</title>
     
-    <!-- PWA用設定の読み込み -->
+    <!-- PWA用設定の読み込み (./ を追加して確実に読み込ませる) -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#ffffff">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="./icon-192.png">
     
     <!-- Tailwind CSS (スタイリング用) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,10 +28,9 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        /* アプリ特有のスタイル調整 */
         body {
-            touch-action: manipulation; /* タップの遅延を防ぐ */
-            -webkit-tap-highlight-color: transparent; /* タップ時のハイライトを消す */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         .animate-in {
             animation: fadeIn 0.2s ease-out;
@@ -45,7 +44,7 @@
 <body class="bg-slate-50 text-slate-900 overscroll-none">
     <div id="root"></div>
 
-    <!-- PWA用 Service Worker の登録 -->
+    <!-- PWA用 Service Worker の登録 (./ を追加して確実に読み込ませる) -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -72,10 +71,10 @@
 
         function App() {
             // State for timers and status
-            const [isActive, setIsActive] = useState(false); // Session is running
-            const [isCompressing, setIsCompressing] = useState(false); // Compressions are happening
-            const [totalTime, setTotalTime] = useState(0); // Total milliseconds
-            const [compressionTime, setCompressionTime] = useState(0); // Compression milliseconds
+            const [isActive, setIsActive] = useState(false);
+            const [isCompressing, setIsCompressing] = useState(false);
+            const [totalTime, setTotalTime] = useState(0);
+            const [compressionTime, setCompressionTime] = useState(0);
             const [logs, setLogs] = useState([]);
             
             // Session Info
@@ -84,7 +83,7 @@
             
             // UI States
             const [showResetConfirm, setShowResetConfirm] = useState(false);
-            const [notification, setNotification] = useState(null); // { message: string, type: 'success' | 'error' }
+            const [notification, setNotification] = useState(null);
 
             // Metronome state
             const [metronomeEnabled, setMetronomeEnabled] = useState(false);
@@ -95,7 +94,6 @@
             const metronomeRef = useRef(null);
             const notificationTimeoutRef = useRef(null);
 
-            // Sound effect for Metronome (Short beep)
             const playMetronomeBeep = useCallback(() => {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
@@ -114,40 +112,33 @@
                 osc.stop(ctx.currentTime + 0.1);
             }, []);
 
-            // Sound effect for Action Buttons (Cat Meow simulation)
             const playCatMeow = useCallback(() => {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
                 const ctx = new AudioContext();
-                
-                // Create oscillator for the "meow" tone
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 
-                // Triangle wave for a softer, meow-like sound
                 osc.type = 'triangle'; 
                 
                 const now = ctx.currentTime;
-                const duration = 0.4; // Meow is longer than a bark
+                const duration = 0.4;
 
-                // Pitch envelope: Starts mid, goes high, then drops low (Me-ow)
                 osc.frequency.setValueAtTime(800, now); 
                 osc.frequency.linearRampToValueAtTime(1200, now + 0.1); 
                 osc.frequency.linearRampToValueAtTime(600, now + duration);
                 
-                // Volume envelope: Soft attack, gradual decay
                 gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.2, now + 0.05); // Attack
-                gain.gain.exponentialRampToValueAtTime(0.01, now + duration); // Decay
+                gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
                 
                 osc.start(now);
                 osc.stop(now + duration + 0.1);
             }, []);
 
-            // Show notification toast
             const showNotification = (message, type = 'success') => {
                 setNotification({ message, type });
                 if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
@@ -156,7 +147,6 @@
                 }, 3000);
             };
 
-            // Main Timer Logic
             useEffect(() => {
                 if (isActive) {
                 timerRef.current = setInterval(() => {
@@ -171,7 +161,6 @@
                 return () => clearInterval(timerRef.current);
             }, [isActive, isCompressing]);
 
-            // Metronome Logic
             useEffect(() => {
                 if (isActive && isCompressing && metronomeEnabled) {
                 const intervalMs = (60 / bpm) * 1000;
@@ -186,7 +175,6 @@
                 return () => clearInterval(metronomeRef.current);
             }, [isActive, isCompressing, metronomeEnabled, playMetronomeBeep]);
 
-            // Format time as mm:ss
             const formatTime = (ms) => {
                 const totalSeconds = Math.floor(ms / 1000);
                 const minutes = Math.floor(totalSeconds / 60);
@@ -194,21 +182,18 @@
                 return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             };
 
-            // Calculate CCF
             const ccf = totalTime > 0 ? Math.round((compressionTime / totalTime) * 100) : 0;
 
-            // Logging Helper
             const addLog = (message) => {
                 const timestamp = new Date().toLocaleTimeString();
                 const elapsed = formatTime(totalTime); 
                 setLogs(prev => [{ time: timestamp, elapsed, message }, ...prev]);
             };
 
-            // Actions
             const toggleSession = () => {
                 if (!isActive) {
                     setIsActive(true);
-                    setIsCompressing(true); // 変更: 蘇生開始と同時に圧迫も開始
+                    setIsCompressing(true);
 
                     if (totalTime === 0) {
                         addLog("蘇生活動開始 (Code Blue Start)");
@@ -248,7 +233,6 @@
                 setTotalTime(0);
                 setCompressionTime(0);
                 setLogs([]);
-                // Do not clear names on reset, usually handy to keep them for next session
                 setShowResetConfirm(false);
                 showNotification("リセットしました");
             };
@@ -258,7 +242,6 @@
                 playCatMeow();
             };
 
-            // Generate Log Text
             const generateLogText = () => {
                 const header = [
                     "--------------------------------",
@@ -272,14 +255,11 @@
                 ].join('\n');
 
                 const body = logs.map(l => `[${l.time}] (経過: ${l.elapsed}) ${l.message}`).join('\n');
-                
                 return header + body;
             };
 
-            // Export Logs
             const copyLogsToClipboard = () => {
                 const logText = generateLogText();
-                
                 const textArea = document.createElement("textarea");
                 textArea.value = logText;
                 textArea.style.position = "fixed";
@@ -300,7 +280,6 @@
                 console.error('Fallback: Oops, unable to copy', err);
                 showNotification("コピー中にエラーが発生しました", 'error');
                 }
-
                 document.body.removeChild(textArea);
             };
 
@@ -318,9 +297,8 @@
                 showNotification("ログファイルをダウンロードしました");
             };
 
-            // Determine CCF Color
             const getCcfColor = () => {
-                if (totalTime < 10000) return "text-gray-600"; // Too early
+                if (totalTime < 10000) return "text-gray-600";
                 if (ccf >= 80) return "text-green-600";
                 if (ccf >= 60) return "text-yellow-600";
                 return "text-red-600";
@@ -347,7 +325,6 @@
             return (
                 <div className="min-h-screen bg-slate-50 p-2 md:p-4 font-sans text-slate-900 max-w-3xl mx-auto shadow-xl relative">
                 
-                {/* Toast Notification */}
                 {notification && (
                     <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 transition-all ${
                     notification.type === 'error' ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'
@@ -356,7 +333,6 @@
                     </div>
                 )}
 
-                {/* Reset Confirmation Modal */}
                 {showResetConfirm && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full animate-in">
@@ -381,7 +357,6 @@
                     </div>
                 )}
 
-                {/* Header */}
                 <header className="mb-4 bg-white p-4 rounded-xl shadow-sm border-b">
                     <div className="flex items-center justify-between mb-4">
                         <div>
@@ -400,7 +375,6 @@
                         </button>
                     </div>
 
-                    {/* Evaluator & Student Inputs */}
                     <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                         <div>
                             <label className="flex items-center gap-1 text-xs font-bold text-slate-500 mb-1">
@@ -429,7 +403,6 @@
                     </div>
                 </header>
 
-                {/* Main Timer Display Area */}
                 <div className="grid grid-cols-2 gap-2 md:gap-4 mb-4">
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
                     <div className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1 flex items-center gap-1">
@@ -450,7 +423,6 @@
                     </div>
                 </div>
 
-                {/* CCF Percentage */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6 text-center relative overflow-hidden">
                     {isCompressing && metronomeEnabled && (
                     <div className={`absolute top-2 right-2 w-4 h-4 rounded-full ${metronomeTick ? 'bg-red-500' : 'bg-red-200'}`} />
@@ -467,7 +439,6 @@
                     </div>
                 </div>
 
-                {/* Start/Stop & Compression Controls */}
                 <div className="mb-6">
                     {!isActive ? (
                     <div className="space-y-3">
@@ -495,7 +466,6 @@
                     </div>
                     ) : (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {/* Compression Button (Main) */}
                         <button 
                         onClick={toggleCompression}
                         className={`md:col-span-3 py-6 rounded-xl font-bold text-2xl shadow-lg flex flex-col items-center justify-center gap-2 transition-all active:scale-95 border-b-4 ${
@@ -510,7 +480,6 @@
                         </div>
                         </button>
 
-                        {/* Sub Controls */}
                         <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
                         <button 
                             onClick={toggleSession}
@@ -529,7 +498,6 @@
                     )}
                 </div>
 
-                {/* Action Buttons (Only visible when active or reviewed) */}
                 <div className="mb-6 space-y-3">
                     {actionGroups.map((group, gIndex) => (
                     <div key={gIndex} className="bg-white p-3 rounded-lg shadow-sm border border-slate-100">
@@ -551,7 +519,6 @@
                     ))}
                 </div>
 
-                {/* Logs Section */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
                     <div className="flex justify-between items-center mb-2 border-b pb-2">
                     <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
