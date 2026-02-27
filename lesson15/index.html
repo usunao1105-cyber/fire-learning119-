@@ -2,8 +2,13 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CCF Calculator & CPR Log</title>
+    
+    <!-- PWA用設定の読み込み -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="apple-touch-icon" href="icon-192.png">
     
     <!-- Tailwind CSS (スタイリング用) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,6 +31,7 @@
         /* アプリ特有のスタイル調整 */
         body {
             touch-action: manipulation; /* タップの遅延を防ぐ */
+            -webkit-tap-highlight-color: transparent; /* タップ時のハイライトを消す */
         }
         .animate-in {
             animation: fadeIn 0.2s ease-out;
@@ -36,8 +42,22 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-900 overscroll-none">
     <div id="root"></div>
+
+    <!-- PWA用 Service Worker の登録 -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, err => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
 
     <!-- アプリケーションロジック -->
     <script type="text/babel" data-type="module">
