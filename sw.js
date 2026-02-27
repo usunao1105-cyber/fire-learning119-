@@ -6,7 +6,6 @@ const urlsToCache = [
   './manifest.json'
 ];
 
-// インストール時にファイルをキャッシュ
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -17,12 +16,10 @@ self.addEventListener('install', event => {
   );
 });
 
-// ネットワークリクエストの処理（オフライン時はキャッシュを返す）
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // キャッシュがあればそれを返し、なければネットワークから取得
         return response || fetch(event.request);
       })
   );
