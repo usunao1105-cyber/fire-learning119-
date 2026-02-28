@@ -44,7 +44,7 @@
 <body class="bg-slate-50 text-slate-900 overscroll-none">
     <div id="root"></div>
 
-    <!-- PWA用 Service Worker の登録 (./ を追加して確実に読み込ませる) -->
+    <!-- PWA用 Service Worker の登録 -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -68,6 +68,22 @@
             Zap, Syringe, ClipboardList, Stethoscope, X, Check,
             User, Users
         } from 'lucide-react';
+
+        // 修正ポイント：AudioContextをグローバルで1つだけ保持して再利用する
+        let sharedAudioCtx = null;
+        const getAudioContext = () => {
+            if (!sharedAudioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    sharedAudioCtx = new AudioContext();
+                }
+            }
+            // ブラウザの自動再生制限によりサスペンド状態になっている場合は再開する
+            if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
+                sharedAudioCtx.resume();
+            }
+            return sharedAudioCtx;
+        };
 
         function App() {
             // State for timers and status
@@ -95,9 +111,9 @@
             const notificationTimeoutRef = useRef(null);
 
             const playMetronomeBeep = useCallback(() => {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!AudioContext) return;
-                const ctx = new AudioContext();
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 
@@ -113,9 +129,9 @@
             }, []);
 
             const playCatMeow = useCallback(() => {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!AudioContext) return;
-                const ctx = new AudioContext();
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 
@@ -367,7 +383,11 @@
                             <p className="text-xs text-slate-500">胸骨圧迫実施率 & 活動記録</p>
                         </div>
                         <button 
-                            onClick={() => setMetronomeEnabled(!metronomeEnabled)}
+                            onClick={() => {
+                                // ユーザーアクションをトリガーにAudioContextを初期化・再開させる
+                                getAudioContext();
+                                setMetronomeEnabled(!metronomeEnabled);
+                            }}
                             className={`p-2 rounded-full transition-colors ${metronomeEnabled ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}
                             title="メトロノーム (110bpm)"
                         >
